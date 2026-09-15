@@ -1,0 +1,45 @@
+syntax = "proto3";
+
+package liquidity;
+
+option go_package = "./proto";
+
+service LiquidityEngine {
+  rpc AuthorizePayment (PaymentRequest) returns (PaymentResponse);
+  rpc QueryConsolidatedBalance (BalanceRequest) returns (BalanceResponse);
+}
+
+message PaymentRequest {
+  string user_id = 1;
+  int64 amount_minor_units = 2;
+  string currency = 3;
+  string merchant_id = 4;
+  string idempotency_key = 5;
+}
+
+message SplitDetail {
+  string provider = 1;
+  string asset_type = 2;
+  int64 amount_minor_units = 3;
+}
+
+message PaymentResponse {
+  string transaction_id = 1;
+  bool approved = 2;
+  string failure_reason = 3;
+  int64 latency_ms = 4;
+  repeated SplitDetail splits = 5;
+}
+
+message BalanceRequest {
+  string user_id = 1;
+}
+
+message BalanceResponse {
+  int64 total_purchasing_power_minor_units = 1;
+  string currency = 2;
+  repeated SplitDetail balances = 3;
+}
+
+// To generate real gRPC code:
+// protoc --go_out=. --go-grpc_out=. proto/liquidity.proto
