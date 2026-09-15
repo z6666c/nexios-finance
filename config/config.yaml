@@ -1,0 +1,9 @@
+http_port: 8080
+request_timeout_ms: 300
+provider_name: Al Rajhi Bank
+provider_base_url: https://api.sandbox.alrajhibank.com.sa/ob/v1
+provider_client_cert_path: /secrets/alrajhi/client.crt
+provider_client_key_path: /secrets/alrajhi/client.key
+provider_ca_cert_path: /secrets/alrajhi/ca.crt
+ledger_driver: cockroachdb
+ledger_dsn: postgresql://root@cockroachdb:26257/nexios?sslmode=disable
