@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NEXIOS. FINANCE — لوحة الإدارة</title>
+<link rel="icon" href="data:,">
+<style>
+  :root {
+    --bg-dark:#03060D; --navy-deep:#0B192C; --emerald:#00E676; --cyan-tech:#00B4D8; --cyan-soft:#48CAE4;
+    --gold:#D4AF37; --danger:#FF5252; --surface-card:#091322; --surface-inner:#050B14;
+    --border-subtle:#152742; --text-muted:#8FA0B5;
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg-dark); color:#fff; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Noto Sans Arabic',sans-serif; }
+  .layout { display:flex; min-height:100vh; }
+
+  .sidebar { width:236px; background:var(--navy-deep); border-left:1px solid var(--border-subtle); flex-shrink:0; padding:20px 14px; display:flex; flex-direction:column; }
+  .brand { display:flex; align-items:center; gap:8px; padding:6px 6px 18px; border-bottom:1px solid var(--border-subtle); margin-bottom:14px; }
+  .brand span { font-size:13px; font-weight:800; }
+  .brand .dot { color:var(--emerald); }
+  .nav-item { display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:10px; font-size:13px; color:var(--text-muted); cursor:pointer; margin-bottom:3px; }
+  .nav-item svg { width:16px; height:16px; flex-shrink:0; }
+  .nav-item.active { background:rgba(0,230,118,.15); color:var(--emerald); font-weight:700; border-right:3px solid var(--emerald); }
+  .nav-section { font-size:9.5px; color:#5E7387; font-weight:800; letter-spacing:.5px; text-transform:uppercase; padding:14px 12px 6px; }
+  .nav-tag { margin-top:auto; font-size:10px; color:#5E7387; padding:10px 6px; line-height:1.7; }
+
+  .main { flex:1; padding:26px 30px; overflow-x:auto; }
+  .header-row { display:flex; justify-content:space-between; align-items:center; margin-bottom:22px; flex-wrap:wrap; gap:10px; }
+  .header-row h1 { font-size:19px; margin:0; }
+  .header-row p { font-size:12px; color:var(--text-muted); margin:3px 0 0; }
+  .env-pill { font-size:11px; background:rgba(212,175,55,.15); color:var(--gold); padding:4px 12px; border-radius:99px; font-weight:700; border:1px solid rgba(212,175,55,.3); }
+
+  .kpi-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:24px; }
+  .kpi-card { background:var(--surface-inner); border:1px solid var(--border-subtle); border-radius:12px; padding:18px; }
+  .kpi-label { font-size:11px; color:var(--text-muted); }
+  .kpi-value { font-size:22px; font-weight:800; margin-top:5px; }
+  .kpi-note { font-size:10px; margin-top:3px; }
+
+  .grid-2 { display:grid; grid-template-columns:1.3fr 1fr; gap:16px; margin-bottom:20px; }
+  .panel { background:var(--surface-card); border:1px solid var(--border-subtle); border-radius:16px; padding:18px; margin-bottom:18px; }
+  .panel h2 { font-size:13.5px; margin:0 0 13px; display:flex; align-items:center; gap:7px; color:var(--cyan-tech); }
+  .panel h2 svg { width:15px; height:15px; }
+  .panel-note { font-size:11px; color:var(--text-muted); margin:-8px 0 14px; }
+
+  .table-wrapper { width:100%; overflow-x:auto; border:1px solid var(--border-subtle); border-radius:10px; }
+  table { width:100%; border-collapse:collapse; font-size:12px; text-align:right; }
+  th { background:#11223d; color:var(--text-muted); padding:12px; font-weight:600; white-space:nowrap; }
+  td { padding:12px; border-top:1px solid var(--border-subtle); white-space:nowrap; }
+  code { background:var(--bg-dark); padding:2px 6px; border-radius:5px; font-size:11px; color:var(--cyan-tech); }
+
+  .badge { font-size:10px; padding:3px 9px; border-radius:99px; font-weight:700; white-space:nowrap; }
+  .badge-ok { background:rgba(0,230,118,.15); color:var(--emerald); }
+  .badge-open { background:rgba(255,82,82,.15); color:var(--danger); }
+  .badge-half { background:rgba(212,175,55,.15); color:var(--gold); }
+  .badge-pending { background:rgba(0,180,216,.15); color:var(--cyan-tech); }
+  .status-dot { width:7px; height:7px; border-radius:50%; display:inline-block; margin-left:6px; }
+  .dot-green{background:var(--emerald)} .dot-red{background:var(--danger)} .dot-amber{background:var(--gold)}
+
+  .alert { display:flex; gap:9px; align-items:flex-start; padding:11px; border-radius:11px; background:rgba(255,82,82,.1); border:1px solid rgba(255,82,82,.25); margin-bottom:8px; font-size:11.5px; }
+  .alert.info { background:rgba(0,180,216,.1); border-color:rgba(0,180,216,.25); }
+  .alert.warn { background:rgba(212,175,55,.1); border-color:rgba(212,175,55,.25); }
+  .alert svg { width:15px; height:15px; flex-shrink:0; margin-top:1px; }
+  .alert b { display:block; margin-bottom:2px; font-size:12px; }
+  .alert span.muted { color:var(--text-muted); }
+
+  .btn { border:none; border-radius:9px; padding:9px 15px; font-size:12px; font-weight:700; cursor:pointer; display:inline-flex; align-items:center; gap:6px; }
+  .btn svg { width:13px; height:13px; }
+  .btn-primary { background:var(--emerald); color:var(--bg-dark); }
+  .btn-ghost { background:var(--surface-inner); color:#fff; border:1px solid var(--border-subtle); }
+  .btn-sm { padding:5px 10px; font-size:10.5px; border-radius:7px; }
+  .btn-approve { background:rgba(0,230,118,.18); color:var(--emerald); border:1px solid var(--emerald); }
+  .btn-reject { background:rgba(255,82,82,.18); color:var(--danger); border:1px solid var(--danger); }
+  .btn-approve:disabled, .btn-reject:disabled { opacity:.35; cursor:default; }
+
+  .tab-row { display:flex; gap:6px; margin-bottom:14px; }
+  .tab-pill { padding:7px 14px; border-radius:99px; font-size:12px; font-weight:700; cursor:pointer; border:1px solid var(--border-subtle); background:var(--surface-inner); color:var(--text-muted); }
+  .tab-pill.active { background:var(--emerald); color:var(--bg-dark); border-color:var(--emerald); }
+
+  .search-box { display:flex; align-items:center; gap:8px; background:var(--surface-inner); border:1px solid var(--border-subtle); border-radius:10px; padding:9px 13px; margin-bottom:14px; max-width:320px; }
+  .search-box svg { width:15px; height:15px; color:var(--text-muted); }
+  .search-box input { border:none; background:none; outline:none; font-size:12.5px; color:#fff; flex:1; font-family:inherit; }
+
+  .settings-row { display:flex; align-items:center; justify-content:space-between; padding:14px 4px; border-bottom:1px solid var(--border-subtle); font-size:12.5px; }
+  .settings-row:last-child { border-bottom:none; }
+  .toggle { width:40px; height:23px; border-radius:99px; position:relative; border:none; cursor:pointer; }
+  .toggle.on{background:var(--cyan-tech)} .toggle.off{background:var(--border-subtle)}
+  .knob{position:absolute;top:2px;width:19px;height:19px;border-radius:50%;background:#fff}
+  .toggle.on .knob{right:2px} .toggle.off .knob{left:2px}
+
+  .doc-row { display:flex; justify-content:space-between; align-items:center; padding:13px; border:1px solid var(--border-subtle); border-radius:10px; margin-bottom:9px; background:var(--surface-inner); }
+  .doc-row .name { font-size:12.5px; font-weight:700; }
+  .doc-row .meta { font-size:10.5px; color:var(--text-muted); margin-top:3px; }
+
+  .reg-tag { display:inline-block; font-size:9.5px; background:rgba(72,202,228,.12); color:var(--cyan-soft); border:1px solid rgba(72,202,228,.3); padding:2px 8px; border-radius:6px; margin-left:5px; margin-bottom:5px; }
+
+  @media (max-width:900px){ .kpi-grid{grid-template-columns:repeat(2,1fr)} .grid-2{grid-template-columns:1fr} .sidebar{display:none} }
+</style>
+</head>
+<body>
+<div class="layout">
+  <div class="sidebar">
+    <div class="brand" id="sideBrand"></div>
+    <div id="navItems"></div>
+    <div class="nav-tag">NEXIOS Operations Console<br>بيئة تجريبية (Sandbox)</div>
+  </div>
+  <div class="main" id="main"></div>
+</div>
+
+<script>
+const ic = (path) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${path}</svg>`;
+const ICONS = {
+  dashboard: ic(`<rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="5" rx="1.5"/><rect x="13" y="11" width="8" height="10" rx="1.5"/><rect x="3" y="14" width="8" height="7" rx="1.5"/>`),
+  users: ic(`<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.5 3-5.5 6.5-5.5s6.5 2 6.5 5.5"/><path d="M16.5 8.5a3 3 0 1 1 0-6"/><path d="M21.5 20c0-2.8-1.8-4.7-4.2-5.3"/>`),
+  bank: ic(`<path d="M3 21h18"/><path d="M5 21V9"/><path d="M9 21V9"/><path d="M15 21V9"/><path d="M19 21V9"/><path d="M2 9l10-6 10 6"/>`),
+  receipt: ic(`<path d="M6 3h12v18l-3-2-3 2-3-2-3 2Z"/><path d="M9 8h6"/><path d="M9 12h6"/>`),
+  settings: ic(`<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.6V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.6-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3H9a1.7 1.7 0 0 0 1-1.6V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.6 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9V9a1.7 1.7 0 0 0 1.6 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.6 1Z"/>`),
+  chartUp: ic(`<path d="M3 3v18h18"/><path d="M7 14l3-4 3 3 6-8"/>`),
+  alertTriangle: ic(`<path d="M12 3 2 20h20L12 3Z"/><path d="M12 10v4"/><path d="M12 17h.01"/>`),
+  info: ic(`<circle cx="12" cy="12" r="9"/><path d="M12 8h.01"/><path d="M11 12h1v5h1"/>`),
+  clock: ic(`<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/>`),
+  search: ic(`<circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/>`),
+  plus: ic(`<path d="M12 5v14M5 12h14"/>`),
+  download: ic(`<path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M5 21h14"/>`),
+  refresh: ic(`<path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 3v6h-6"/>`),
+  moon: ic(`<path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8Z"/>`),
+  shield: ic(`<path d="M12 3l8 3v6c0 5-3.5 7.5-8 9-4.5-1.5-8-4-8-9V6l8-3Z"/><path d="M9 12l2 2 4-4"/>`),
+  bell: ic(`<path d="M18 8a6 6 0 1 0-12 0c0 7-3 8-3 8h18s-3-1-3-8"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/>`),
+  scale: ic(`<path d="M12 3v18"/><path d="M5 7h14"/><path d="M5 7 2 14a3.5 3.5 0 0 0 6 0Z"/><path d="M19 7l-3 7a3.5 3.5 0 0 0 6 0Z"/><path d="M8 21h8"/>`),
+  fileCheck: ic(`<path d="M14 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8Z"/><path d="M14 3v5h5"/><path d="M9.5 14.5l1.5 1.5 3-3"/>`),
+  idCard: ic(`<rect x="2" y="5" width="20" height="14" rx="2.5"/><circle cx="8" cy="11" r="2"/><path d="M5 17c.5-2 2-3 3-3s2.5 1 3 3"/><path d="M14 9h5"/><path d="M14 13h5"/>`),
+  fileText: ic(`<path d="M14 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8Z"/><path d="M14 3v5h5"/><path d="M9 13h6"/><path d="M9 17h6"/>`),
+  check: ic(`<path d="M20 6 9 17l-5-5"/>`),
+};
+function logoSVG(w,h){
+  return `<svg width="${w}" height="${h}" viewBox="0 0 220 90" xmlns="http://www.w3.org/2000/svg">
+    <path d="M10 18 H70 C85 18 95 45 110 45" stroke="#00E676" stroke-width="7" stroke-linecap="round" fill="none"/>
+    <path d="M10 36 H70 C85 36 95 45 110 45" stroke="#FFFFFF" stroke-width="7" stroke-linecap="round" fill="none"/>
+    <path d="M10 54 H70 C85 54 95 45 110 45" stroke="#48CAE4" stroke-width="7" stroke-linecap="round" fill="none"/>
+    <path d="M10 72 H70 C85 72 95 45 110 45" stroke="#00B4D8" stroke-width="7" stroke-linecap="round" fill="none"/>
+    <circle cx="112" cy="45" r="14" fill="#091322" stroke="#00E676" stroke-width="3"/>
+    <circle cx="112" cy="45" r="7" fill="#00E676"/>
+    <path d="M119 45 H155" stroke="#00E676" stroke-width="9" stroke-linecap="round"/>
+    <polygon points="150,30 175,45 150,60" fill="#00E676"/>
+  </svg>`;
+}
+
+let state = { page:'dashboard', txFilter:'all', finReqFilter:'all' };
+const NAV = [
+  { key:'dashboard', label:'لوحة التحكم', icon:'dashboard' },
+  { key:'users', label:'المستخدمون', icon:'users' },
+  { key:'banks', label:'البنوك المربوطة', icon:'bank' },
+  { key:'transactions', label:'العمليات', icon:'receipt' },
+  { key:'financing', label:'طلبات التمويل', icon:'fileText', section:true },
+  { key:'sama-reports', label:'تقارير ساما', icon:'fileCheck' },
+  { key:'kyc-review', label:'مراجعة KYC', icon:'idCard' },
+  { key:'settings', label:'الإعدادات', icon:'settings' },
+];
+function setPage(p){ state.page=p; render(); }
+
+const providers = [
+  { name:'بنك الراجحي', status:'ok', latency:'84ms', success:'99.6%', users:842 },
+  { name:'صندوق دراية للسيولة', status:'ok', latency:'96ms', success:'99.9%', users:1105 },
+  { name:'بنك الأول', status:'half', latency:'210ms', success:'91.2%', users:511 },
+  { name:'بنك الرياض', status:'open', latency:'—', success:'غير متصل', users:0 },
+];
+const usersData = [
+  { name:'HAMAD (المؤسس)', id:'USR-992', accounts:4, liquidity:'48,350 ر.س', status:'نشط' },
+  { name:'SULTAN', id:'USR-401', accounts:2, liquidity:'8,120 ر.س', status:'نشط' },
+  { name:'محمد القحطاني', id:'USR-773', accounts:2, liquidity:'21,900 ر.س', status:'موقوف مؤقتاً' },
+  { name:'نورة الشمري', id:'USR-215', accounts:1, liquidity:'3,050 ر.س', status:'نشط' },
+];
+const txData = [
+  { id:'TX-NEXIOS-88419', user:'HAMAD (USR-992)', total:'1,000.00 ر.س', cash:'400.00 ر.س (الراجحي)', invest:'600.00 ر.س (دراية)', time:'218 ms', status:'ok' },
+  { id:'TX-NEXIOS-88420', user:'SULTAN (USR-401)', total:'250.00 ر.س', cash:'250.00 ر.س (الإنماء)', invest:'0.00 ر.س (كاش كافٍ)', time:'82 ms', status:'ok' },
+  { id:'TX-NEXIOS-88421', user:'محمد (USR-773)', total:'2,000.00 ر.س', cash:'—', invest:'تحويل داخلي', time:'—', status:'pending' },
+  { id:'TX-NEXIOS-88422', user:'نورة (USR-215)', total:'96.50 ر.س', cash:'96.50 ر.س (الراجحي)', invest:'0.00 ر.س', time:'—', status:'failed' },
+];
+
+const financingAgreements = [
+  { bank:'بنك الراجحي', type:'تسهيل سحب فوري (VRP)', limit:'5,000 ر.س / يومياً لكل مستخدم', utilization:'62%', signed:'10 يناير 2026', renewal:'10 يناير 2027', status:'نشط', regs:['SAMA Open Banking','FAPI 1.0 Advanced'] },
+  { bank:'صندوق دراية للسيولة', type:'تسييل استثماري آلي', limit:'50,000 ر.س / يومياً لكل مستخدم', utilization:'41%', signed:'1 فبراير 2026', renewal:'1 فبراير 2027', status:'نشط', regs:['لائحة صناديق الاستثمار','CMA'] },
+  { bank:'بنك الأول', type:'بطاقة ائتمانية احتياطية', limit:'6,000 ر.س لكل مستخدم', utilization:'18%', signed:'15 نوفمبر 2025', renewal:'15 نوفمبر 2026', status:'قيد التجديد', regs:['قواعد البطاقات الائتمانية — ساما'] },
+  { bank:'بنك الرياض', type:'تسهيل سيولة (مقترح)', limit:'—', utilization:'—', signed:'—', renewal:'—', status:'معلّق', regs:['قيد التفاوض'] },
+];
+
+const samaReports = [
+  { name:'تقرير السيولة الشهري (Liquidity Coverage Report)', freq:'شهري', last:'1 يناير 2026', next:'1 فبراير 2026', status:'ok' },
+  { name:'تقرير مكافحة غسل الأموال (AML/CFT STR Summary)', freq:'ربع سنوي', last:'1 أكتوبر 2025', next:'1 يناير 2026', status:'late' },
+  { name:'تقرير حوادث الأمن السيبراني', freq:'عند الحدوث', last:'—', next:'—', status:'none' },
+  { name:'تقرير الامتثال لإطار المصرفية المفتوحة', freq:'نصف سنوي', last:'1 يوليو 2025', next:'1 يناير 2026', status:'due' },
+  { name:'تقرير حماية أموال العملاء (Safeguarding)', freq:'ربع سنوي', last:'1 أكتوبر 2025', next:'1 يناير 2026', status:'ok' },
+];
+
+let kycQueue = [
+  { user:'HAMAD (USR-992)', submitted:'5 يناير 2026', risk:'منخفض', pep:'لا', status:'موافَق' },
+  { user:'SULTAN (USR-401)', submitted:'8 يناير 2026', risk:'منخفض', pep:'لا', status:'قيد المراجعة' },
+  { user:'محمد القحطاني (USR-773)', submitted:'2 يناير 2026', risk:'متوسط', pep:'لا', status:'يتطلب مستندات' },
+  { user:'نورة الشمري (USR-215)', submitted:'9 يناير 2026', risk:'منخفض', pep:'لا', status:'قيد المراجعة' },
+];
+
+function statusBadge(s){
+  const map = { ok:['badge-ok','● معتمدة ومكتملة'], pending:['badge-pending','قيد المعالجة'], failed:['badge-open','فشلت — تراجع تلقائي'] };
+  const [cls,label]=map[s]; return `<span class="badge ${cls}">${label}</span>`;
+}
+function reportBadge(s){
+  const map = { ok:['badge-ok','مقدَّم في موعده'], late:['badge-open','متأخر'], due:['badge-half','مستحق قريباً'], none:['badge-pending','لا يوجد حوادث'] };
+  const [cls,label]=map[s]; return `<span class="badge ${cls}">${label}</span>`;
+}
+function kycBadge(s){
+  const map = { 'موافَق':'badge-ok', 'قيد المراجعة':'badge-pending', 'يتطلب مستندات':'badge-half', 'مرفوض':'badge-open' };
+  return `<span class="badge ${map[s]||'badge-pending'}">${s}</span>`;
+}
+
+function setKycStatus(i, status){ kycQueue[i].status = status; render(); }
+
+function renderDashboard(){
+  return `
+    <div class="header-row">
+      <div><h1>لوحة إدارة المنظومة والعمليات</h1><p>NEXIOS Operations Console — بيانات تجريبية</p></div>
+      <span class="env-pill">SAMA Sandbox</span>
+    </div>
+    <div class="kpi-grid">
+      <div class="kpi-card"><p class="kpi-label">زمن الاستجابة اللحظي (Average Latency)</p><p class="kpi-value" style="color:var(--emerald)">184 <span style="font-size:12px">ms</span></p><p class="kpi-note" style="color:var(--cyan-tech)">أقل من 300ms</p></div>
+      <div class="kpi-card"><p class="kpi-label">محفظة التجسير (Settlement Pool)</p><p class="kpi-value">3,850,240 <span style="font-size:12px">ر.س</span></p><p class="kpi-note" style="color:var(--emerald)">التغطية: 99.4%</p></div>
+      <div class="kpi-card"><p class="kpi-label">معاملات التسييل اليومية الناجحة</p><p class="kpi-value">12,842</p><p class="kpi-note" style="color:var(--emerald)">النجاح: 99.98%</p></div>
+      <div class="kpi-card"><p class="kpi-label">العمليات المعوضة آلياً (Auto-Rollbacks)</p><p class="kpi-value" style="color:var(--danger)">3</p><p class="kpi-note" style="color:var(--text-muted)">استرجاع فوري للأصول</p></div>
+    </div>
+    <div class="grid-2">
+      <div class="panel">
+        <h2>${ICONS.shield} حالة المزودين (قاطع الدائرة)</h2>
+        <table><thead><tr><th>المزود</th><th>الحالة</th><th>الاستجابة</th><th>النجاح</th></tr></thead><tbody>
+        ${providers.map(p=>{
+          const dot=p.status==='ok'?'dot-green':p.status==='half'?'dot-amber':'dot-red';
+          const b=p.status==='ok'?['badge-ok','نشط']:p.status==='half'?['badge-half','نصف مفتوح']:['badge-open','معزول'];
+          return `<tr><td><span class="status-dot ${dot}"></span>${p.name}</td><td><span class="badge ${b[0]}">${b[1]}</span></td><td>${p.latency}</td><td>${p.success}</td></tr>`;
+        }).join('')}
+        </tbody></table>
+      </div>
+      <div class="panel">
+        <h2>${ICONS.bell} تنبيهات النظام</h2>
+        <div class="alert"><div>${ICONS.alertTriangle}</div><div><b>قاطع الدائرة مفتوح — بنك الرياض</b><span class="muted">تجاوز 3 محاولات فاشلة. عُزل تلقائياً منذ 4 دقائق.</span></div></div>
+        <div class="alert info"><div>${ICONS.info}</div><div><b>حدث Outbox قيد النشر</b><span class="muted">12 حدث تسوية بانتظار الدفع إلى Kafka.</span></div></div>
+        <div class="alert warn"><div>${ICONS.clock}</div><div><b>تقرير AML/CFT متأخر</b><span class="muted">استحق التقديم في 1 يناير — يرجى المتابعة مع فريق الامتثال.</span></div></div>
+      </div>
+    </div>
+    <div class="panel">
+      <h2>${ICONS.receipt} سجل التسييل اللحظي المزدوج (Real-Time Double-Entry Feed)</h2>
+      <div class="table-wrapper"><table><thead><tr><th>معرف المعاملة</th><th>المستخدم</th><th>المبلغ الإجمالي</th><th>الخصم النقدي</th><th>التسييل الاستثماري</th><th>زمن المعالجة</th><th>الحالة</th></tr></thead><tbody>
+      ${txData.map(t=>`<tr><td><code>${t.id}</code></td><td>${t.user}</td><td>${t.total}</td><td>${t.cash}</td><td style="color:var(--emerald)">${t.invest}</td><td>${t.time}</td><td>${statusBadge(t.status)}</td></tr>`).join('')}
+      </tbody></table></div>
+    </div>`;
+}
+
+function renderUsers(){
+  return `
+    <div class="header-row"><div><h1>المستخدمون</h1><p>${usersData.length} مستخدم معروض من أصل 2٬014</p></div>
+      <button class="btn btn-primary">${ICONS.plus} دعوة مستخدم</button></div>
+    <div class="search-box">${ICONS.search}<input placeholder="ابحث بالاسم أو رقم الهوية..."></div>
+    <div class="panel"><table><thead><tr><th>الاسم</th><th>رقم الهوية</th><th>الحسابات المربوطة</th><th>السيولة المجمعة</th><th>الحالة</th></tr></thead><tbody>
+      ${usersData.map(u=>`<tr><td>${u.name}</td><td><code>${u.id}</code></td><td>${u.accounts}</td><td>${u.liquidity}</td><td><span class="badge ${u.status==='نشط'?'badge-ok':'badge-half'}">${u.status}</span></td></tr>`).join('')}
+    </tbody></table></div>`;
+}
+
+function renderBanks(){
+  return `
+    <div class="header-row"><div><h1>البنوك والمصادر المربوطة</h1><p>حالة كل مزود Open Banking وأداؤه الحي</p></div>
+      <button class="btn btn-ghost">${ICONS.refresh} تحديث الحالة</button></div>
+    <div class="kpi-grid" style="grid-template-columns:repeat(4,1fr)">
+      ${providers.map(p=>{
+        const dot=p.status==='ok'?'dot-green':p.status==='half'?'dot-amber':'dot-red';
+        const b=p.status==='ok'?['badge-ok','نشط']:p.status==='half'?['badge-half','نصف مفتوح']:['badge-open','معزول'];
+        return `<div class="kpi-card">
+          <div style="display:flex;justify-content:space-between;align-items:center"><span class="status-dot ${dot}"></span><span class="badge ${b[0]}">${b[1]}</span></div>
+          <p class="kpi-label" style="margin-top:10px">${p.name}</p>
+          <p class="kpi-value" style="font-size:16px">${p.users} مستخدم</p>
+          <p class="kpi-note" style="color:var(--text-muted)">استجابة ${p.latency} · نجاح ${p.success}</p>
+        </div>`;
+      }).join('')}
+    </div>
+    <div class="panel">
+      <h2>${ICONS.settings} إعدادات المزودين</h2>
+      <div class="settings-row"><span>إعادة المحاولة التلقائية عند فشل الاتصال</span><button class="toggle on"><span class="knob"></span></button></div>
+      <div class="settings-row"><span>تنبيه فريق العمليات عند فتح قاطع الدائرة</span><button class="toggle on"><span class="knob"></span></button></div>
+      <div class="settings-row"><span>تفعيل بنك الرياض تلقائياً بعد التعافي</span><button class="toggle off"><span class="knob"></span></button></div>
+    </div>`;
+}
+
+function renderTransactions(){
+  return `
+    <div class="header-row"><div><h1>العمليات</h1><p>سجل كامل لعمليات الدفع والتحويلات عبر جميع المستخدمين</p></div>
+      <button class="btn btn-ghost">${ICONS.download} تصدير CSV</button></div>
+    <div class="tab-row">
+      <span class="tab-pill ${state.txFilter==='all'?'active':''}" onclick="state.txFilter='all';render()">الكل</span>
+      <span class="tab-pill ${state.txFilter==='ok'?'active':''}" onclick="state.txFilter='ok';render()">مكتملة</span>
+      <span class="tab-pill ${state.txFilter==='pending'?'active':''}" onclick="state.txFilter='pending';render()">قيد المعالجة</span>
+      <span class="tab-pill ${state.txFilter==='failed'?'active':''}" onclick="state.txFilter='failed';render()">فشلت</span>
+    </div>
+    <div class="panel"><div class="table-wrapper"><table><thead><tr><th>معرف المعاملة</th><th>المستخدم</th><th>المبلغ</th><th>نقدي</th><th>استثماري</th><th>الزمن</th><th>الحالة</th></tr></thead><tbody>
+      ${txData.filter(t=>state.txFilter==='all'||t.status===state.txFilter).map(t=>`<tr><td><code>${t.id}</code></td><td>${t.user}</td><td>${t.total}</td><td>${t.cash}</td><td style="color:var(--emerald)">${t.invest}</td><td>${t.time}</td><td>${statusBadge(t.status)}</td></tr>`).join('')}
+    </tbody></table></div></div>`;
+}
+
+/* --- Incoming financing requests (from user app "طلب تمويل جديد") --- */
+let financingRequests = [
+  { id:'REQ-482910', user:'HAMAD (USR-992)', bank:'صندوق دراية للسيولة', type:'تسييل استثماري', amount:'15,000 ر.س', purpose:'تغطية مصاريف تشغيلية', submitted:'اليوم، 9:40 ص', status:'قيد المراجعة' },
+  { id:'REQ-482877', user:'SULTAN (USR-401)', bank:'بنك الأول', type:'بطاقة ائتمانية', amount:'8,000 ر.س', purpose:'—', submitted:'أمس، 4:15 م', status:'قيد المراجعة' },
+  { id:'REQ-481290', user:'نورة الشمري (USR-215)', bank:'بنك الراجحي', type:'سحب فوري (VRP)', amount:'3,000 ر.س', purpose:'—', submitted:'12 يناير 2026', status:'موافَق' },
+];
+function reqBadge(s){
+  const map = { 'قيد المراجعة':'badge-pending', 'موافَق':'badge-ok', 'مرفوض':'badge-open' };
+  return `<span class="badge ${map[s]||'badge-pending'}">${s}</span>`;
+}
+function setReqStatus(i, status){ financingRequests[i].status = status; render(); }
+
+function renderFinancing(){
+  const filtered = financingRequests.filter(r=>state.finReqFilter==='all'||r.status===state.finReqFilter);
+  return `
+    <div class="header-row"><div><h1>طلبات التمويل</h1><p>طلبات تمويل جديدة واردة من التطبيق، والاتفاقيات النشطة الحالية</p></div>
+      <span class="env-pill">SAMA Regulatory</span></div>
+
+    <div class="panel">
+      <h2>${ICONS.fileText} طلبات التمويل الجديدة</h2>
+      <p class="panel-note">طلبات مُقدَّمة من المستخدمين مباشرة عبر شاشة "طلب تمويل جديد" في التطبيق.</p>
+      <div class="tab-row">
+        <span class="tab-pill ${state.finReqFilter==='all'?'active':''}" onclick="state.finReqFilter='all';render()">الكل</span>
+        <span class="tab-pill ${state.finReqFilter==='قيد المراجعة'?'active':''}" onclick="state.finReqFilter='قيد المراجعة';render()">قيد المراجعة</span>
+        <span class="tab-pill ${state.finReqFilter==='موافَق'?'active':''}" onclick="state.finReqFilter='موافَق';render()">موافَق عليها</span>
+        <span class="tab-pill ${state.finReqFilter==='مرفوض'?'active':''}" onclick="state.finReqFilter='مرفوض';render()">مرفوضة</span>
+      </div>
+      <div class="table-wrapper"><table><thead><tr><th>رقم الطلب</th><th>المستخدم</th><th>البنك</th><th>نوع التمويل</th><th>المبلغ</th><th>تاريخ التقديم</th><th>الحالة</th><th>إجراء</th></tr></thead><tbody>
+      ${filtered.map((r)=>{ const i = financingRequests.indexOf(r); return `<tr>
+        <td><code>${r.id}</code></td><td>${r.user}</td><td>${r.bank}</td><td>${r.type}</td><td>${r.amount}</td><td>${r.submitted}</td><td>${reqBadge(r.status)}</td>
+        <td>
+          <button class="btn btn-approve btn-sm" ${r.status==='موافَق'?'disabled':''} onclick="setReqStatus(${i},'موافَق')">${ICONS.check.replace('width="24" height="24"','width="11" height="11"')} قبول</button>
+          <button class="btn btn-reject btn-sm" ${r.status==='مرفوض'?'disabled':''} onclick="setReqStatus(${i},'مرفوض')">رفض</button>
+        </td>
+      </tr>`; }).join('')}
+      </tbody></table></div>
+    </div>
+
+    <div class="panel">
+      <h2>${ICONS.bank} اتفاقيات التمويل النشطة مع البنوك</h2>
+      <p class="panel-note">بنود التمويل الفعلية الموقعة مع كل مزود، ونطاق الأنظمة التي تحكمها.</p>
+      <div class="table-wrapper"><table><thead><tr><th>البنك / المزود</th><th>نوع التسهيل</th><th>الحد</th><th>نسبة الاستخدام</th><th>تاريخ التوقيع</th><th>التجديد</th><th>الحالة</th></tr></thead><tbody>
+      ${financingAgreements.map(f=>`<tr>
+        <td>${f.bank}<div>${f.regs.map(r=>`<span class="reg-tag">${r}</span>`).join('')}</div></td>
+        <td>${f.type}</td><td>${f.limit}</td><td>${f.utilization}</td><td>${f.signed}</td><td>${f.renewal}</td>
+        <td><span class="badge ${f.status==='نشط'?'badge-ok':f.status==='قيد التجديد'?'badge-half':'badge-pending'}">${f.status}</span></td>
+      </tr>`).join('')}
+      </tbody></table></div>
+    </div>`;
+}
+
+function renderSamaReports(){
+  return `
+    <div class="header-row"><div><h1>تقارير ساما التنظيمية</h1><p>التقارير الدورية المقدَّمة إلى البنك المركزي السعودي (SAMA)</p></div>
+      <span class="env-pill">SAMA Regulatory</span></div>
+    <div class="panel">
+      <h2>${ICONS.fileCheck} التقارير التنظيمية الدورية</h2>
+      <p class="panel-note">تُقدَّم هذه التقارير إلى البنك المركزي السعودي (ساما) وفق إطار المصرفية المفتوحة ولوائح مكافحة غسل الأموال.</p>
+      ${samaReports.map(r=>`
+        <div class="doc-row">
+          <div>
+            <div class="name">${r.name}</div>
+            <div class="meta">التكرار: ${r.freq} · آخر تقديم: ${r.last} · الموعد القادم: ${r.next}</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px">
+            ${reportBadge(r.status)}
+            <button class="btn btn-ghost btn-sm">${ICONS.download} تنزيل</button>
+          </div>
+        </div>`).join('')}
+    </div>
+    <div class="panel">
+      <h2>${ICONS.scale} متطلبات الامتثال الأساسية</h2>
+      <div class="settings-row"><span>إطار المصرفية المفتوحة (Open Banking Framework)</span><span class="badge badge-ok">مطابق</span></div>
+      <div class="settings-row"><span>مكافحة غسل الأموال وتمويل الإرهاب (AML/CFT)</span><span class="badge badge-ok">مطابق</span></div>
+      <div class="settings-row"><span>حماية بيانات المستهلك المالي</span><span class="badge badge-ok">مطابق</span></div>
+      <div class="settings-row"><span>إقامة البيانات داخل المملكة (Data Residency)</span><span class="badge badge-ok">مطابق</span></div>
+      <div class="settings-row"><span>كفاية رأس المال لأنشطة التمويل الاستهلاكي</span><span class="badge badge-half">قيد المراجعة</span></div>
+    </div>`;
+}
+
+function renderKycReview(){
+  return `
+    <div class="header-row"><div><h1>مراجعة اعرف عميلك (KYC)</h1><p>قائمة انتظار المراجعة وفق سياسة مكافحة غسل الأموال</p></div>
+      <span class="env-pill">SAMA Regulatory</span></div>
+    <div class="panel">
+      <h2>${ICONS.idCard} قائمة انتظار مراجعة اعرف عميلك (KYC)</h2>
+      <p class="panel-note">طلبات KYC الواردة من التطبيق، مع تصنيف المخاطر وفق سياسة مكافحة غسل الأموال.</p>
+      <div class="table-wrapper"><table><thead><tr><th>المستخدم</th><th>تاريخ التقديم</th><th>تصنيف المخاطر</th><th>PEP</th><th>الحالة</th><th>إجراء</th></tr></thead><tbody>
+      ${kycQueue.map((k,i)=>`<tr>
+        <td>${k.user}</td><td>${k.submitted}</td>
+        <td><span class="badge ${k.risk==='منخفض'?'badge-ok':'badge-half'}">${k.risk}</span></td>
+        <td>${k.pep}</td>
+        <td>${kycBadge(k.status)}</td>
+        <td>
+          <button class="btn btn-approve btn-sm" ${k.status==='موافَق'?'disabled':''} onclick="setKycStatus(${i},'موافَق')">${ICONS.check.replace('width="24" height="24"','width="11" height="11"')} قبول</button>
+          <button class="btn btn-reject btn-sm" ${k.status==='مرفوض'?'disabled':''} onclick="setKycStatus(${i},'مرفوض')">رفض</button>
+        </td>
+      </tr>`).join('')}
+      </tbody></table></div>
+    </div>`;
+}
+
+function renderSettings(){
+  return `
+    <div class="header-row"><div><h1>الإعدادات</h1><p>تفضيلات لوحة الإدارة والتنبيهات</p></div></div>
+    <div class="panel" style="max-width:560px">
+      <h2>${ICONS.settings} عام</h2>
+      <div class="settings-row"><span style="display:flex;align-items:center;gap:8px">${ICONS.moon} المظهر الداكن</span><button class="toggle on"><span class="knob"></span></button></div>
+      <div class="settings-row"><span>تنبيهات البريد الإلكتروني للأعطال الحرجة</span><button class="toggle on"><span class="knob"></span></button></div>
+      <div class="settings-row"><span>تقرير أسبوعي عبر البريد</span><button class="toggle off"><span class="knob"></span></button></div>
+      <div class="settings-row"><span>وضع الصيانة (يوقف عمليات جديدة مؤقتاً)</span><button class="toggle off"><span class="knob"></span></button></div>
+    </div>`;
+}
+
+function render(){
+  document.getElementById('sideBrand').innerHTML = `${logoSVG(34,15)}<span>NEXIOS<span class="dot">.</span> FINANCE</span>`;
+  document.getElementById('navItems').innerHTML = NAV.map(n=>`${n.section?'<div class="nav-section">امتثال ساما (SAMA)</div>':''}<div class="nav-item ${state.page===n.key?'active':''}" onclick="setPage('${n.key}')">${ICONS[n.icon]}<span>${n.label}</span></div>`).join('');
+  let html='';
+  if(state.page==='dashboard') html=renderDashboard();
+  else if(state.page==='users') html=renderUsers();
+  else if(state.page==='banks') html=renderBanks();
+  else if(state.page==='transactions') html=renderTransactions();
+  else if(state.page==='financing') html=renderFinancing();
+  else if(state.page==='sama-reports') html=renderSamaReports();
+  else if(state.page==='kyc-review') html=renderKycReview();
+  else html=renderSettings();
+  document.getElementById('main').innerHTML = html;
+}
+render();
+</script>
+</body>
+</html>
