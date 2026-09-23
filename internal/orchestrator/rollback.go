@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/google/uuid"
+	"nexios-finance/internal/uuid"
 
 	"nexios-finance/internal/domain"
 	"nexios-finance/internal/ledger"
