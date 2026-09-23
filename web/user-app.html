@@ -421,6 +421,12 @@ let state = {
   banks: [
     { name:'تفويض بنك الراجحي (VRP)', meta:'السقف اليومي للسحب: 5,000 ر.س', active:true },
     { name:'تفويض منصة التداول الاستثمارية', meta:'أوامر بيع لحظية لتغطية الفارق', active:true },
+    { name:'مصرف الإنماء', meta:'تفويض سحب فوري (VRP) — السقف اليومي: 3,000 ر.س', active:true },
+    { name:'البنك السعودي الفرنسي', meta:'تفويض سحب فوري (VRP) — السقف اليومي: 4,000 ر.س', active:true },
+    { name:'بنك الجزيرة', meta:'تفويض سحب فوري (VRP) — السقف اليومي: 2,000 ر.س', active:true },
+    { name:'البنك الأهلي السعودي', meta:'تفويض سحب فوري (VRP) — السقف اليومي: 3,500 ر.س', active:true },
+    { name:'محفظة الأسهم السعودية', meta:'أوامر بيع لحظية لتغطية الفارق', active:true },
+    { name:'محفظة صناديق المؤشرات العالمية', meta:'أوامر بيع لحظية لتغطية الفارق', active:true },
     { name:'بنك الرياض', meta:'غير مربوط بعد', active:false },
   ],
   kyc: {
@@ -440,26 +446,47 @@ let state = {
     { id:2, name:'عبدالله الحامد', role:'عضو عائلة', limit:1500, active:true },
     { id:3, name:'فهد العتيبي', role:'موظف', limit:2000, active:false },
   ],
+  nexiosAccountNumber: 'NXS-SA-7741-2093',
+  transferType: 'distribute',
+  ownTransfer: { from:'acc1', to:'acc5', amount:'', done:false, ref:null },
+  p2pTransfer: { recipient:'', amount:'', note:'', done:false, ref:null },
+  distributeTransfer: { done:false, ref:null, executedRows:null },
 };
 
-/* accounts used by the transfer simulator, in priority order */
-const simAccounts = [
-  { name:'الحساب الجاري (الراجحي)', balance:400, color:'var(--cyan-tech)', respectsFloor:false },
-  { name:'صندوق دراية للسيولة', balance:31427, color:'var(--emerald)', respectsFloor:true },
-  { name:'بطاقة احتياطية (فيزا)', balance:6000, color:'var(--gold)', respectsFloor:false },
+/* accounts linked to Nexios — banks + investment portfolios, in priority order.
+   Each carries a unique Nexios-issued sub-account number, used for internal transfers. */
+const linkedAccounts = [
+  { id:'acc1', name:'الحساب الجاري (الراجحي)', bank:'بنك الراجحي', nexiosNo:'NXS-SA-7741-2093-01', balance:400, color:'var(--cyan-tech)', respectsFloor:false, detailId:null },
+  { id:'acc2', name:'صندوق دراية للسيولة', bank:'صندوق دراية', nexiosNo:'NXS-SA-7741-2093-02', balance:31427, color:'var(--emerald)', respectsFloor:true, detailId:'f2' },
+  { id:'acc3', name:'بطاقة احتياطية (فيزا)', bank:'بنك الأول', nexiosNo:'NXS-SA-7741-2093-03', balance:6000, color:'var(--gold)', respectsFloor:false, detailId:'f3' },
+  { id:'acc4', name:'الحساب الجاري (الإنماء)', bank:'مصرف الإنماء', nexiosNo:'NXS-SA-7741-2093-04', balance:2300, color:'var(--cyan-soft)', respectsFloor:false, detailId:null },
+  { id:'acc5', name:'حساب التوفير (الفرنسي)', bank:'البنك السعودي الفرنسي', nexiosNo:'NXS-SA-7741-2093-05', balance:5800, color:'var(--cyan-tech)', respectsFloor:false, detailId:null },
+  { id:'acc6', name:'الحساب الجاري (الجزيرة)', bank:'بنك الجزيرة', nexiosNo:'NXS-SA-7741-2093-06', balance:1150, color:'var(--gold)', respectsFloor:false, detailId:null },
+  { id:'acc7', name:'الحساب الجاري (الأهلي)', bank:'البنك الأهلي السعودي', nexiosNo:'NXS-SA-7741-2093-07', balance:3400, color:'var(--emerald)', respectsFloor:false, detailId:null },
+  { id:'acc8', name:'محفظة الأسهم السعودية', bank:'منصة تداول استثمارية', nexiosNo:'NXS-SA-7741-2093-08', balance:18600, color:'var(--gold)', respectsFloor:true, detailId:null },
+  { id:'acc9', name:'محفظة صناديق المؤشرات العالمية', bank:'منصة تداول استثمارية', nexiosNo:'NXS-SA-7741-2093-09', balance:9900, color:'var(--cyan-soft)', respectsFloor:true, detailId:null },
 ];
+function findAcc(id){ return linkedAccounts.find(a=>a.id===id); }
 function computeSplit(amount){
   let remaining = Number(amount) || 0;
   const rows = [];
-  simAccounts.forEach(acc=>{
+  linkedAccounts.forEach(acc=>{
     if (remaining <= 0) return;
     let available = acc.balance;
     if (acc.respectsFloor) available = Math.max(0, acc.balance - state.safetyFloor);
     const take = Math.min(available, remaining);
-    if (take > 0){ rows.push({ name: acc.name, color: acc.color, amount: take }); remaining -= take; }
+    if (take > 0){ rows.push({ id: acc.id, name: acc.name, color: acc.color, amount: take }); remaining -= take; }
   });
   return { rows, shortfall: remaining };
 }
+
+/* mock Nexios users reachable for peer-to-peer transfers, each with their own Nexios account number */
+const nexiosUsers = [
+  { name:'سارة الحامد', account:'NXS-SA-2204-5567' },
+  { name:'عبدالله الحامد', account:'NXS-SA-8830-1129' },
+  { name:'فهد العتيبي', account:'NXS-SA-4415-7783' },
+  { name:'نورة القحطاني', account:'NXS-SA-9902-3341' },
+];
 
 const availableBanks = ['بنك الراجحي','بنك الأول','بنك الرياض','مصرف الإنماء','صندوق دراية للسيولة'];
 const financeTypes = ['سحب فوري (VRP)','بطاقة ائتمانية','تسييل استثماري','تمويل شخصي تقسيطي'];
@@ -542,11 +569,13 @@ function renderHome(){
       <div><div class="demo-cta-text">تقرير السيولة الدوري</div><div class="demo-cta-sub">كم مرة غطّتك نكسيوس هذا الشهر، وكم وفّرت عليك من رسوم</div></div>
       <div class="demo-play" style="background:var(--emerald)">${ICONS.trendUp}</div>
     </div>
-    <p style="font-size:11px;color:var(--text-muted);margin-bottom:8px">المصادر المربوطة حياً (Open Banking):</p>
-    <div class="source-row"><div><div class="source-name">بنك الراجحي (جاري)</div><div class="source-meta">SA03 •••• 1016</div></div><span class="source-amt">400.00 ر.س</span></div>
-    <div class="source-row" onclick="openSub('financing-detail','f2')"><div><div class="source-name">صندوق دراية للسيولة</div><div class="source-meta">تسييل فوري T+0 · اضغط لعرض بنود التمويل</div></div><span class="source-amt">31,427.00 ر.س</span></div>
-    <div class="source-row"><div><div class="source-name">حساب التوفير</div><div class="source-meta">بنك الراجحي</div></div><span class="source-amt">12,500.00 ر.س</span></div>
-    <div class="source-row" onclick="openSub('financing-detail','f3')"><div><div class="source-name">بطاقة احتياطية (فيزا)</div><div class="source-meta">بنك الأول · اضغط لعرض بنود التمويل</div></div><span class="source-amt">6,000.00 ر.س</span></div>
+    <div class="trust-badge" style="background:rgba(0,180,216,.1);border-color:rgba(0,180,216,.3);color:var(--cyan-tech);margin-bottom:14px">${ICONS.idCard} رقم حسابك في نكسيوس: ${state.nexiosAccountNumber}</div>
+    <p style="font-size:11px;color:var(--text-muted);margin-bottom:8px">المصادر المربوطة حياً (Open Banking) — ${linkedAccounts.length} حسابات وبنوك ومحافظ:</p>
+    ${linkedAccounts.map(a=>`
+    <div class="source-row" ${a.detailId?`onclick="openSub('financing-detail','${a.detailId}')"`:''}>
+      <div><div class="source-name">${a.name}</div><div class="source-meta">${a.bank}${a.detailId?' · اضغط لعرض بنود التمويل':''}</div></div>
+      <span class="source-amt">${fmt(a.balance)} ر.س</span>
+    </div>`).join('')}
     <div class="spacer"></div>`;
 }
 
@@ -888,75 +917,206 @@ function renderDemo(){
   return h;
 }
 
-/* --- Transfers: methods + live simulator --- */
+/* --- Transfers: coverage methods (quick tiles) + actionable transfer flows --- */
+const transferMethods = [
+  {
+    key:'method-1', icon: ICONS.zap, color:'cyan-tech', name:'السحب الفوري من الحساب الجاري (VRP)',
+    sub:'تغطية الفارق مباشرة من حسابك البنكي الجاري', bg:'rgba(0,180,216,.15)',
+    stats:[['<300ms','زمن التنفيذ'],['بلا رسوم','التكلفة'],['أولوية 1','الترتيب']],
+    steps:[
+      'يكتشف النظام نقص الرصيد لحظة إتمام الشراء.',
+      'يُرسل أمر سحب موقّع رقمياً (JWS) إلى البنك عبر واجهة Open Banking المعتمدة من ساما.',
+      'يوافق البنك ويكتمل الخصم خلال جلسة الدفع نفسها، دون تدخل يدوي.',
+    ],
+  },
+  {
+    key:'method-2', icon: ICONS.trendUp, color:'emerald', name:'التسييل الاستثماري الآلي',
+    sub:'استرداد جزئي فوري من صناديقك ومحافظك عند الحاجة', bg:'rgba(0,230,118,.15)',
+    stats:[['فوري T+0','زمن التنفيذ'],['حسب الأداء','التكلفة'],['أولوية 2','الترتيب']],
+    steps:[
+      'يُفعَّل هذا المصدر فقط بعد استنفاد الحساب الجاري ووفق ترتيب أولوياتك.',
+      'يحترم النظام "قفل الأمان" الذي حددته، ولا يسحب من الصندوق أو المحفظة إذا كان الرصيد سينخفض عن الحد الأدنى.',
+      'يُحوَّل المبلغ المسترد مباشرة لإتمام العملية، وتُسجَّل الحركة في سجل العمليات.',
+    ],
+  },
+  {
+    key:'method-3', icon: ICONS.bank, color:'gold', name:'التحويل البنكي المجدول (SARIE)',
+    sub:'للمبالغ الكبيرة أو التسويات غير الفورية بين حساباتك', bg:'rgba(212,175,55,.15)',
+    stats:[['حتى T+1','زمن التنفيذ'],['وفق تعرفة البنك','التكلفة'],['اختياري','الترتيب']],
+    steps:[
+      'تطلب التحويل يدوياً من شاشة التحويلات، أو يُجدوَل تلقائياً عند إعادة توازن السيولة بين حساباتك.',
+      'تُصاغ رسالة التحويل وفق معيار pacs.008، وتُرسل عبر نظام "سريع" للمدفوعات الفورية بين البنوك.',
+    ],
+  },
+];
+function renderMethodDetail(){
+  const m = transferMethods.find(x=>x.key===state.subpage);
+  if(!m) return '';
+  let h = `<p class="page-title">${m.name}</p><p class="page-sub">${m.sub}</p>
+    <div class="method-stats" style="margin-bottom:14px">
+      ${m.stats.map(s=>`<div class="method-stat"><div class="method-stat-val">${s[0]}</div><div class="method-stat-lbl">${s[1]}</div></div>`).join('')}
+    </div>`;
+  m.steps.forEach((s,i)=>{ h += `<div class="clause-block"><div class="clause-num">الخطوة ${i+1}</div><div class="clause-text">${s}</div></div>`; });
+  h += `<div class="spacer"></div>`;
+  return h;
+}
+
 function setTransferSimAmount(v){ state.transferSimAmount = v; render(); }
-function renderTransfers(){
-  const amt = Number(state.transferSimAmount)||0;
+function setTransferType(t){ state.transferType = t; render(); }
+
+function setOwnField(field, val){ state.ownTransfer[field] = val; render(); }
+function executeOwnTransfer(){
+  const t = state.ownTransfer;
+  const from = findAcc(t.from), to = findAcc(t.to);
+  const amt = Number(t.amount) || 0;
+  if(!from || !to || from.id===to.id || amt<=0 || amt>from.balance) return;
+  from.balance -= amt; to.balance += amt;
+  t.done = true; t.ref = 'TRF-' + Math.floor(100000 + Math.random()*899999);
+  render();
+}
+function resetOwnTransfer(){ state.ownTransfer = { from:'acc1', to:'acc5', amount:'', done:false, ref:null }; render(); }
+
+function setP2PField(field, val){ state.p2pTransfer[field] = val; render(); }
+function executeP2PTransfer(){
+  const t = state.p2pTransfer;
+  const payer = findAcc('acc1');
+  const amt = Number(t.amount) || 0;
+  if(!t.recipient || amt<=0 || amt>payer.balance) return;
+  payer.balance -= amt;
+  t.done = true; t.ref = 'TRF-' + Math.floor(100000 + Math.random()*899999);
+  render();
+}
+function resetP2PTransfer(){ state.p2pTransfer = { recipient:'', amount:'', note:'', done:false, ref:null }; render(); }
+
+function executeDistributeTransfer(){
+  const amt = Number(state.transferSimAmount) || 0;
   const split = computeSplit(amt);
-  let h = `<p class="page-title">التحويلات</p><p class="page-sub">طرق تغطية عملياتك المالية وآلية عمل كل منها</p>
+  if(!split.rows.length || split.shortfall>0) return;
+  split.rows.forEach(r=>{ const acc = findAcc(r.id); if(acc) acc.balance -= r.amount; });
+  state.distributeTransfer = { done:true, ref:'TRF-' + Math.floor(100000 + Math.random()*899999), executedRows: split.rows };
+  render();
+}
+function resetDistributeTransfer(){ state.distributeTransfer = { done:false, ref:null, executedRows:null }; state.transferSimAmount=''; render(); }
 
-    <div class="method-card">
-      <div class="method-top">
-        <div class="method-icon" style="background:rgba(0,180,216,.15);color:var(--cyan-tech)">${ICONS.zap}</div>
-        <div><div class="method-name">السحب الفوري من الحساب الجاري (VRP)</div><div class="method-desc">تغطية الفارق مباشرة من حسابك البنكي الجاري عبر تفويض مصرفية مفتوحة دائم.</div></div>
-      </div>
-      <div class="method-stats">
-        <div class="method-stat"><div class="method-stat-val">&lt;300ms</div><div class="method-stat-lbl">زمن التنفيذ</div></div>
-        <div class="method-stat"><div class="method-stat-val">بلا رسوم</div><div class="method-stat-lbl">التكلفة</div></div>
-        <div class="method-stat"><div class="method-stat-val">أولوية 1</div><div class="method-stat-lbl">الترتيب</div></div>
-      </div>
-      <div class="method-steps">
-        <div class="method-step"><span class="num">1</span><span>يكتشف النظام نقص الرصيد لحظة إتمام الشراء.</span></div>
-        <div class="method-step"><span class="num">2</span><span>يُرسل أمر سحب موقّع رقمياً (JWS) إلى البنك عبر واجهة Open Banking المعتمدة من ساما.</span></div>
-        <div class="method-step"><span class="num">3</span><span>يوافق البنك ويكتمل الخصم خلال جلسة الدفع نفسها، دون تدخل يدوي.</span></div>
-      </div>
-    </div>
+function renderTransfers(){
+  let h = `<p class="page-title">التحويلات</p><p class="page-sub">حوّل بين حساباتك، لمستخدمي نكسيوس، أو وزّع مبلغاً على البنوك المفوَّضة</p>
 
-    <div class="method-card">
-      <div class="method-top">
-        <div class="method-icon" style="background:rgba(0,230,118,.15);color:var(--emerald)">${ICONS.trendUp}</div>
-        <div><div class="method-name">التسييل الاستثماري الآلي</div><div class="method-desc">استرداد جزئي فوري من وحدات صندوق السيولة عند عدم كفاية الحساب الجاري وحده.</div></div>
-      </div>
-      <div class="method-stats">
-        <div class="method-stat"><div class="method-stat-val">فوري T+0</div><div class="method-stat-lbl">زمن التنفيذ</div></div>
-        <div class="method-stat"><div class="method-stat-val">حسب الأداء</div><div class="method-stat-lbl">التكلفة</div></div>
-        <div class="method-stat"><div class="method-stat-val">أولوية 2</div><div class="method-stat-lbl">الترتيب</div></div>
-      </div>
-      <div class="method-steps">
-        <div class="method-step"><span class="num">1</span><span>يُفعَّل هذا المصدر فقط بعد استنفاد الحساب الجاري ووفق ترتيب أولوياتك.</span></div>
-        <div class="method-step"><span class="num">2</span><span>يحترم النظام "قفل الأمان" الذي حددته، ولا يسحب من الصندوق إذا كان الرصيد سينخفض عن الحد الأدنى.</span></div>
-        <div class="method-step"><span class="num">3</span><span>يُحوَّل المبلغ المسترد مباشرة لإتمام العملية، وتُسجَّل الحركة في سجل العمليات.</span></div>
-      </div>
-    </div>
+    <p style="font-size:11px;color:var(--text-muted);margin-bottom:8px;font-weight:700">طرق التغطية — كيف تعمل كل واحدة</p>
+    ${transferMethods.map(m=>`
+    <div class="demo-cta" style="margin-bottom:8px" onclick="openSub('${m.key}')">
+      <div><div class="demo-cta-text">${m.name}</div><div class="demo-cta-sub">${m.sub}</div></div>
+      <div class="demo-play" style="background:var(--${m.color})">${m.icon}</div>
+    </div>`).join('')}
 
-    <div class="method-card">
-      <div class="method-top">
-        <div class="method-icon" style="background:rgba(212,175,55,.15);color:var(--gold)">${ICONS.bank}</div>
-        <div><div class="method-name">التحويل البنكي المجدول (SARIE)</div><div class="method-desc">لتحويل المبالغ الكبيرة أو التسويات غير الفورية بين حساباتك المرتبطة، بمعيار الرسائل المصرفية ISO 20022.</div></div>
-      </div>
-      <div class="method-stats">
-        <div class="method-stat"><div class="method-stat-val">حتى T+1</div><div class="method-stat-lbl">زمن التنفيذ</div></div>
-        <div class="method-stat"><div class="method-stat-val">وفق تعرفة البنك</div><div class="method-stat-lbl">التكلفة</div></div>
-        <div class="method-stat"><div class="method-stat-val">اختياري</div><div class="method-stat-lbl">الترتيب</div></div>
-      </div>
-      <div class="method-steps">
-        <div class="method-step"><span class="num">1</span><span>تطلب التحويل يدوياً من شاشة العمليات، أو يُجدوَل تلقائياً عند إعادة توازن السيولة بين حساباتك.</span></div>
-        <div class="method-step"><span class="num">2</span><span>تُصاغ رسالة التحويل وفق معيار pacs.008، وتُرسل عبر نظام "سريع" للمدفوعات الفورية بين البنوك.</span></div>
-      </div>
+    <p style="font-size:11px;color:var(--text-muted);margin:18px 0 8px;font-weight:700">إجراء تحويل جديد</p>
+    <div class="fin-subtabs">
+      <span class="fin-subtab ${state.transferType==='own'?'active':''}" onclick="setTransferType('own')">بين حساباتي</span>
+      <span class="fin-subtab ${state.transferType==='p2p'?'active':''}" onclick="setTransferType('p2p')">لمستخدم نكسوس آخر</span>
+      <span class="fin-subtab ${state.transferType==='distribute'?'active':''}" onclick="setTransferType('distribute')">توزيع على البنوك المفوَّضة</span>
     </div>
-
-    <div class="sim-box">
-      <div class="sim-title">${ICONS.zap} محاكي "ماذا لو" — جرّب مبلغاً وشاهد التغطية</div>
-      <div class="form-group" style="margin-bottom:10px">
-        <span class="form-label">قيمة العملية (ر.س)</span>
-        <input class="form-input" type="number" value="${state.transferSimAmount}" oninput="setTransferSimAmount(this.value)">
-      </div>
-      ${split.rows.map(r=>`<div class="sim-result-row"><span class="src"><span class="dot" style="background:${r.color}"></span>${r.name}</span><span>${fmt(r.amount)} ر.س</span></div>`).join('') || '<p style="font-size:11px;color:var(--text-muted)">أدخل مبلغاً لعرض خطة التغطية.</p>'}
-      ${split.rows.length ? `<div class="sim-total"><span>الإجمالي المغطى</span><span style="color:var(--emerald)">${fmt(amt-split.shortfall)} ر.س</span></div>` : ''}
-      ${split.shortfall > 0 ? `<div class="sim-warn">${ICONS.alertTriangle} السيولة المتاحة غير كافية لتغطية كامل المبلغ — يتبقى ${fmt(split.shortfall)} ر.س غير مغطى وفق قفل الأمان الحالي.</div>` : ''}
-    </div>
+    ${renderTransferAction()}
     <div class="spacer"></div>`;
   return h;
+}
+
+function renderTransferAction(){
+  if (state.transferType === 'own') return renderOwnTransferForm();
+  if (state.transferType === 'p2p') return renderP2PTransferForm();
+  return renderDistributeTransferForm();
+}
+
+function renderOwnTransferForm(){
+  const t = state.ownTransfer;
+  if (t.done) {
+    const from = findAcc(t.from), to = findAcc(t.to);
+    return `<div class="status-banner done">${ICONS.check}<div><b style="font-size:12px">تم التحويل بنجاح</b><div style="font-size:11px;color:var(--text-muted);margin-top:3px">مرجع العملية: <span class="req-id">${t.ref}</span></div></div></div>
+      <div class="req-summary">
+        <div>من: <b style="color:#fff">${from.name}</b> (${from.bank})</div>
+        <div style="margin-top:6px">إلى: <b style="color:#fff">${to.name}</b> (${to.bank})</div>
+        <div style="margin-top:6px">المبلغ: <b style="color:var(--emerald)">${fmt(Number(t.amount))} ر.س</b></div>
+      </div>
+      <button class="submit-btn" style="background:var(--surface-inner);color:#fff;border:1px solid var(--border-subtle)" onclick="resetOwnTransfer()">تحويل آخر</button>`;
+  }
+  const from = findAcc(t.from);
+  const amt = Number(t.amount) || 0;
+  const invalid = !t.from || !t.to || t.from===t.to || amt<=0 || amt>(from?from.balance:0);
+  return `
+    <div class="form-group">
+      <span class="form-label">من حساب</span>
+      <select class="form-input" onchange="setOwnField('from', this.value)">
+        ${linkedAccounts.map(a=>`<option value="${a.id}" ${t.from===a.id?'selected':''}>${a.name} — ${fmt(a.balance)} ر.س</option>`).join('')}
+      </select>
+    </div>
+    <div class="form-group">
+      <span class="form-label">إلى حساب</span>
+      <select class="form-input" onchange="setOwnField('to', this.value)">
+        ${linkedAccounts.map(a=>`<option value="${a.id}" ${t.to===a.id?'selected':''}>${a.name} — ${a.bank}</option>`).join('')}
+      </select>
+    </div>
+    <div class="form-group">
+      <span class="form-label">المبلغ (ر.س)</span>
+      <input class="form-input" type="number" placeholder="مثال: 500" value="${t.amount}" oninput="setOwnField('amount', this.value)">
+      ${from ? `<p style="font-size:9.5px;color:var(--text-muted);margin-top:5px">الرصيد المتاح في حساب المصدر: ${fmt(from.balance)} ر.س</p>` : ''}
+    </div>
+    <button class="submit-btn" ${invalid?'disabled':''} onclick="executeOwnTransfer()">تنفيذ التحويل</button>`;
+}
+
+function renderP2PTransferForm(){
+  const t = state.p2pTransfer;
+  if (t.done) {
+    const r = nexiosUsers.find(u=>u.name===t.recipient);
+    return `<div class="status-banner done">${ICONS.check}<div><b style="font-size:12px">تم إرسال التحويل</b><div style="font-size:11px;color:var(--text-muted);margin-top:3px">مرجع العملية: <span class="req-id">${t.ref}</span></div></div></div>
+      <div class="req-summary">
+        <div>المستلم: <b style="color:#fff">${t.recipient}</b> ${r?`(${r.account})`:''}</div>
+        <div style="margin-top:6px">المبلغ: <b style="color:var(--emerald)">${fmt(Number(t.amount))} ر.س</b></div>
+        ${t.note?`<div style="margin-top:6px">ملاحظة: ${t.note}</div>`:''}
+      </div>
+      <button class="submit-btn" style="background:var(--surface-inner);color:#fff;border:1px solid var(--border-subtle)" onclick="resetP2PTransfer()">تحويل آخر</button>`;
+  }
+  const payer = findAcc('acc1');
+  const amt = Number(t.amount) || 0;
+  const invalid = !t.recipient || amt<=0 || amt>payer.balance;
+  return `
+    <div class="form-group">
+      <span class="form-label">اختر مستخدم نكسوس</span>
+      <div class="chip-row">${nexiosUsers.map(u=>`<span class="chip-opt ${t.recipient===u.name?'selected':''}" onclick="setP2PField('recipient','${u.name}')">${u.name}</span>`).join('')}</div>
+      ${t.recipient ? `<p style="font-size:9.5px;color:var(--text-muted);margin-top:6px">رقم حساب المستلم في نكسيوس: ${nexiosUsers.find(u=>u.name===t.recipient).account}</p>` : ''}
+    </div>
+    <div class="form-group">
+      <span class="form-label">المبلغ (ر.س)</span>
+      <input class="form-input" type="number" placeholder="مثال: 200" value="${t.amount}" oninput="setP2PField('amount', this.value)">
+      <p style="font-size:9.5px;color:var(--text-muted);margin-top:5px">يُخصم من: الحساب الجاري (الراجحي) — الرصيد المتاح ${fmt(payer.balance)} ر.س</p>
+    </div>
+    <div class="form-group">
+      <span class="form-label">ملاحظة (اختياري)</span>
+      <input class="form-input" placeholder="مثال: نصيبك من العشاء" value="${t.note}" oninput="setP2PField('note', this.value)">
+    </div>
+    <button class="submit-btn" ${invalid?'disabled':''} onclick="executeP2PTransfer()">إرسال التحويل</button>`;
+}
+
+function renderDistributeTransferForm(){
+  const dt = state.distributeTransfer;
+  if (dt.done) {
+    return `<div class="status-banner done">${ICONS.check}<div><b style="font-size:12px">تم التوزيع على البنوك المفوَّضة</b><div style="font-size:11px;color:var(--text-muted);margin-top:3px">مرجع العملية: <span class="req-id">${dt.ref}</span></div></div></div>
+      <div class="breakdown-box">
+        <div class="breakdown-title">تفاصيل التوزيع المنفَّذ:</div>
+        ${dt.executedRows.map(r=>`<div class="breakdown-row"><span class="muted">${r.name}:</span><span>${fmt(r.amount)} ر.س</span></div>`).join('')}
+      </div>
+      <button class="submit-btn" style="margin-top:14px;background:var(--surface-inner);color:#fff;border:1px solid var(--border-subtle)" onclick="resetDistributeTransfer()">توزيع آخر</button>`;
+  }
+  const amt = Number(state.transferSimAmount) || 0;
+  const split = computeSplit(amt);
+  return `<div class="sim-box" style="margin-top:0">
+      <div class="sim-title">${ICONS.zap} وزّع مبلغاً تلقائياً حسب أولوياتك</div>
+      <div class="form-group" style="margin-bottom:10px">
+        <span class="form-label">قيمة التحويل (ر.س)</span>
+        <input class="form-input" type="number" value="${state.transferSimAmount}" oninput="setTransferSimAmount(this.value)">
+      </div>
+      ${split.rows.map(r=>`<div class="sim-result-row"><span class="src"><span class="dot" style="background:${r.color}"></span>${r.name}</span><span>${fmt(r.amount)} ر.س</span></div>`).join('') || '<p style="font-size:11px;color:var(--text-muted)">أدخل مبلغاً لعرض خطة التوزيع.</p>'}
+      ${split.rows.length ? `<div class="sim-total"><span>الإجمالي</span><span style="color:var(--emerald)">${fmt(amt-split.shortfall)} ر.س</span></div>` : ''}
+      ${split.shortfall > 0 ? `<div class="sim-warn">${ICONS.alertTriangle} السيولة المتاحة غير كافية لتغطية كامل المبلغ — يتبقى ${fmt(split.shortfall)} ر.س غير مغطى وفق قفل الأمان الحالي.</div>` : ''}
+    </div>
+    <button class="submit-btn" ${(!split.rows.length || split.shortfall>0)?'disabled':''} onclick="executeDistributeTransfer()">تنفيذ التوزيع الآن</button>`;
 }
 
 /* --- KYC form --- */
@@ -1064,6 +1224,9 @@ const SUBPAGE_TITLES = {
   'demo': 'كيف يعمل نكسيوس',
   'liquidity-report': 'تقرير السيولة الدوري',
   'family-mode': 'العائلة والأعمال الصغيرة',
+  'method-1': 'طريقة التغطية',
+  'method-2': 'طريقة التغطية',
+  'method-3': 'طريقة التغطية',
 };
 
 function render(){
@@ -1081,6 +1244,7 @@ function render(){
   else if (state.subpage === 'demo') body = renderDemo();
   else if (state.subpage === 'liquidity-report') body = renderLiquidityReport();
   else if (state.subpage === 'family-mode') body = renderFamilyMode();
+  else if (state.subpage === 'method-1' || state.subpage === 'method-2' || state.subpage === 'method-3') body = renderMethodDetail();
   else if (state.tab==='home') body = renderHome();
   else if (state.tab==='financing') body = renderFinancing();
   else if (state.tab==='transfers') body = renderTransfers();
