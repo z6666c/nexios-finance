@@ -5,5 +5,19 @@ provider_base_url: https://api.sandbox.alrajhibank.com.sa/ob/v1
 provider_client_cert_path: /secrets/alrajhi/client.crt
 provider_client_key_path: /secrets/alrajhi/client.key
 provider_ca_cert_path: /secrets/alrajhi/ca.crt
-ledger_driver: cockroachdb
-ledger_dsn: postgresql://root@cockroachdb:26257/nexios?sslmode=disable
+
+# "memory" (default, zero setup, data lost on restart) or "postgres"
+# (durable - required for a real deployment). docker-compose.yml sets this
+# to "postgres" via the NEXIOS_LEDGER_DRIVER environment variable, which
+# always overrides this file - see internal/config.
+ledger_driver: memory
+
+# Only used when ledger_driver is "postgres". Overridden by NEXIOS_LEDGER_DSN
+# in docker-compose.yml so the real password never has to live in this
+# checked-in file. Format: postgres://user:password@host:port/dbname
+ledger_dsn: postgres://nexios:nexios@localhost:5432/nexios?sslmode=disable
+
+# When set, every /v1/* request must send "Authorization: Bearer <key>".
+# Leave empty only on a trusted local network - see README "Security" notes.
+# Overridden by NEXIOS_AUTH_API_KEY.
+auth_api_key: ""
