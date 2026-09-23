@@ -3,7 +3,7 @@ package domain
 import (
 	"time"
 
-	"github.com/google/uuid"
+	"nexios-finance/internal/uuid"
 )
 
 type TransactionStatus string
@@ -28,17 +28,17 @@ type Transaction struct {
 	ExecutionPlan    []SplitLeg        `json:"splits"`
 	CreatedAt        time.Time         `json:"created_at"`
 	ExecutionTimeMs  int64             `json:"execution_time_ms"`
-	IdempotencyKey string `json:"idempotency_key"`
-	FailureReason string `json:"failure_reason,omitempty"`
+	IdempotencyKey   string            `json:"idempotency_key"`
+	FailureReason    string            `json:"failure_reason,omitempty"`
 }
 
 type SplitLegStatus string
 
 const (
-	SplitPending    SplitLegStatus = "PENDING"
-	SplitReserved   SplitLegStatus = "RESERVED"
-	SplitSettled    SplitLegStatus = "SETTLED"
-	SplitFailed     SplitLegStatus = "FAILED"
+	SplitPending     SplitLegStatus = "PENDING"
+	SplitReserved    SplitLegStatus = "RESERVED"
+	SplitSettled     SplitLegStatus = "SETTLED"
+	SplitFailed      SplitLegStatus = "FAILED"
 	SplitCompensated SplitLegStatus = "COMPENSATED"
 )
 

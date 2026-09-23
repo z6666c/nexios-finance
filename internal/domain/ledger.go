@@ -3,7 +3,7 @@ package domain
 import (
 	"time"
 
-	"github.com/google/uuid"
+	"nexios-finance/internal/uuid"
 )
 
 type EntryType string
@@ -14,14 +14,14 @@ const (
 )
 
 type LedgerEntry struct {
-	ID            uuid.UUID `json:"id"`
-	TransactionID uuid.UUID `json:"transaction_id"`
-	AccountID     uuid.UUID `json:"account_id"`
-	Type          EntryType `json:"type"`
-	AmountMinor   int64     `json:"amount_minor_units"`
-	Currency      string    `json:"currency"`
-	CreatedAt     time.Time `json:"created_at"`
-	IdempotencyKey string `json:"idempotency_key"`
+	ID             uuid.UUID `json:"id"`
+	TransactionID  uuid.UUID `json:"transaction_id"`
+	AccountID      uuid.UUID `json:"account_id"`
+	Type           EntryType `json:"type"`
+	AmountMinor    int64     `json:"amount_minor_units"`
+	Currency       string    `json:"currency"`
+	CreatedAt      time.Time `json:"created_at"`
+	IdempotencyKey string    `json:"idempotency_key"`
 }
 
 type LedgerBatch struct {
