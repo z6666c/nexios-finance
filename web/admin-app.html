@@ -135,6 +135,17 @@
   .incident-date { font-size:10px; color:var(--text-muted); }
   .incident-row { display:flex; gap:8px; font-size:11px; margin-bottom:5px; line-height:1.6; }
   .incident-row .k { color:var(--text-muted); white-space:nowrap; flex-shrink:0; min-width:90px; }
+
+  /* --- Stress test simulator --- */
+  input[type=range] { width:100%; accent-color:var(--cyan-tech); }
+  .stress-presets { display:flex; gap:8px; margin-bottom:14px; }
+  .stress-slider-wrap { background:var(--surface-inner); border:1px solid var(--border-subtle); border-radius:10px; padding:14px; margin-bottom:16px; }
+  .stress-slider-top { display:flex; justify-content:space-between; font-size:12px; font-weight:700; margin-bottom:8px; }
+  .stress-slider-top .val { color:var(--cyan-tech); }
+
+  /* --- Audit export --- */
+  .range-chip { padding:7px 14px; border-radius:99px; font-size:11.5px; font-weight:700; cursor:pointer; border:1px solid var(--border-subtle); background:var(--surface-inner); color:var(--text-muted); }
+  .range-chip.active { background:rgba(0,180,216,.15); color:var(--cyan-tech); border-color:var(--cyan-tech); }
 </style>
 </head>
 <body>
@@ -176,6 +187,7 @@ const ICONS = {
   coins: ic(`<circle cx="9" cy="9" r="6"/><path d="M14.5 8a6 6 0 1 1 0 10.5"/><path d="M6.5 9h5"/><path d="M9 6.5v5"/>`),
   history: ic(`<path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/><path d="M12 8v5l3.5 2"/>`),
   target: ic(`<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1" fill="currentColor" stroke="none"/>`),
+  zap: ic(`<path d="M13 2 4 14h7l-1 8 9-12h-7l1-8Z"/>`),
 };
 function logoSVG(w,h){
   return `<svg width="${w}" height="${h}" viewBox="0 0 220 90" xmlns="http://www.w3.org/2000/svg">
@@ -190,12 +202,13 @@ function logoSVG(w,h){
   </svg>`;
 }
 
-let state = { page:'dashboard', txFilter:'all', finReqFilter:'all' };
+let state = { page:'dashboard', txFilter:'all', finReqFilter:'all', auditRange:'7d', stressPct:30 };
 const NAV = [
   { key:'dashboard', label:'لوحة التحكم', icon:'dashboard' },
   { key:'users', label:'المستخدمون', icon:'users' },
   { key:'banks', label:'البنوك المربوطة', icon:'bank' },
   { key:'transactions', label:'العمليات', icon:'receipt' },
+  { key:'risk-radar', label:'رادار المخاطر', icon:'target', sectionLabel:'المخاطر والمراقبة' },
   { key:'revenue', label:'نموذج الإيرادات', icon:'trendUp', sectionLabel:'النمو والأعمال' },
   { key:'roadmap', label:'خارطة الطريق', icon:'flag' },
   { key:'financing', label:'طلبات التمويل', icon:'fileText', sectionLabel:'امتثال ساما (SAMA)' },
@@ -292,6 +305,64 @@ function kycBadge(s){
 
 function setKycStatus(i, status){ kycQueue[i].status = status; render(); }
 
+/* --- Risk radar: flagged usage patterns --- */
+const riskFlags = [
+  { user:'محمد القحطاني', id:'USR-773', severity:'danger', pattern:'اعتماد كامل على مصدر واحد لأكثر من 80% من العمليات', detail:'96% من عملياته خلال آخر 30 يوماً غُطيت من مصدر تسييل واحد فقط دون أي تنويع بين المصادر.' },
+  { user:'SULTAN', id:'USR-401', severity:'warn', pattern:'سحب متكرر أكثر من 15 مرة خلال 24 ساعة', detail:'18 عملية سحب فوري (VRP) خلال يوم واحد، أعلى من المعدل الطبيعي لهذا المستخدم بنحو 6 أضعاف.' },
+  { user:'نورة الشمري', id:'USR-215', severity:'warn', pattern:'استخدام متكرر للبطاقة الاحتياطية كمصدر أساسي', detail:'استُخدمت البطاقة الاحتياطية (الملاذ الأخير في مصفوفة الأولويات) في 40% من عملياتها بدلاً من الحساب الجاري.' },
+];
+
+/* --- Stress test simulator --- */
+function computeStressImpact(pct){
+  const totalUsers = 2014;
+  const settlementPool = 3850240;
+  const atRiskUsers = Math.round(totalUsers * (pct/100) * 0.55);
+  const exposure = Math.round(settlementPool * (pct/100));
+  const declineRisk = Math.min(99, pct * 1.8).toFixed(1);
+  return { atRiskUsers, exposure, declineRisk };
+}
+function setStressPct(v){ state.stressPct = Number(v); render(); }
+function stressSliderInput(v){
+  state.stressPct = Number(v);
+  const r = computeStressImpact(state.stressPct);
+  const lbl = document.getElementById('stressPctLabel');
+  const at = document.getElementById('stressAtRisk');
+  const ex = document.getElementById('stressExposure');
+  const dr = document.getElementById('stressDeclineRisk');
+  if(lbl) lbl.textContent = '-' + state.stressPct + '%';
+  if(at) at.textContent = r.atRiskUsers.toLocaleString('ar-SA');
+  if(ex) ex.textContent = r.exposure.toLocaleString('ar-SA') + ' ر.س';
+  if(dr) dr.textContent = r.declineRisk + '%';
+}
+
+/* --- Success stories (illustrative, not real user data) --- */
+const successStories = [
+  { title:'مستخدم صندوق استثمار مقيَّد', before:'قبل نكسيوس: رُفضت 3 عمليات هذا الشهر بسبب نقص السيولة الآنية رغم توفر 31,000 ر.س في صندوق الاستثمار.', after:'بعد نكسيوس: صفر عمليات مرفوضة، تغطية تلقائية خلال 218 مللي ثانية لكل عملية.' },
+  { title:'صاحب عمل صغير بسيولة متقلبة', before:'قبل نكسيوس: تعطّل صرف رواتب فريق صغير مرتين بسبب تأخر تحويل بين حسابين بنكيين مختلفين.', after:'بعد نكسيوس: تُجمَّع السيولة من كل الحسابات آلياً، ولم تتأخر أي عملية صرف منذ الانضمام.' },
+  { title:'مستخدم يعتمد على بطاقة ائتمانية فقط', before:'قبل نكسيوس: كان يعتمد كلياً على بطاقة ائتمانية برسوم 2.5% شهرياً حتى على المبالغ الصغيرة.', after:'بعد نكسيوس: تُستخدم البطاقة كملاذ أخير فقط بعد استنفاد مصادر أرخص، ووفّر نحو 60% من رسوم الفائدة الشهرية.' },
+];
+
+/* --- Audit trail export (real client-side CSV download) --- */
+function setAuditRange(r){ state.auditRange = r; render(); }
+function exportAuditCSV(){
+  const rows = txData.filter(t=>state.txFilter==='all'||t.status===state.txFilter);
+  const header = ['معرف المعاملة','المستخدم','المبلغ الإجمالي','الخصم النقدي','التسييل الاستثماري','زمن المعالجة','الحالة'];
+  const csvRows = [header.join(',')];
+  rows.forEach(t=>{
+    csvRows.push([t.id, t.user, t.total, t.cash, t.invest, t.time, t.status].map(v=>`"${String(v).replace(/"/g,'""')}"`).join(','));
+  });
+  const csvContent = '﻿' + csvRows.join('\r\n');
+  const blob = new Blob([csvContent], { type:'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `nexios-audit-trail-${state.auditRange}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
 function renderDashboard(){
   return `
     <div class="header-row">
@@ -362,6 +433,56 @@ function renderRevenue(){
             <div class="ue-label">${u.label}</div>
             <div class="ue-value ${u.tone==='ok'?'ok':''}">${u.value}</div>
           </div>`).join('')}
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>${ICONS.trendUp} قصص نجاح (أمثلة توضيحية)</h2>
+      <p class="panel-note">أمثلة قبل/بعد توضيحية لتصور الأثر — ليست بيانات مستخدمين حقيقية.</p>
+      ${successStories.map(s=>`
+        <div class="incident-card">
+          <div class="incident-top"><span class="incident-title">${s.title}</span></div>
+          <div class="incident-row"><span class="k">قبل:</span><span>${s.before}</span></div>
+          <div class="incident-row"><span class="k">بعد:</span><span style="color:var(--emerald)">${s.after}</span></div>
+        </div>`).join('')}
+    </div>`;
+}
+
+function renderRiskRadar(){
+  const stress = computeStressImpact(state.stressPct);
+  return `
+    <div class="header-row"><div><h1>رادار المخاطر</h1><p>مستخدمون بأنماط استخدام غير طبيعية قبل أن تتحول لمشكلة امتثال أو ائتمانية</p></div>
+      <span class="env-pill">مراقبة استباقية</span></div>
+
+    <div class="panel">
+      <h2>${ICONS.alertTriangle} أنماط مرصودة</h2>
+      ${riskFlags.map(f=>`
+        <div class="incident-card">
+          <div class="incident-top">
+            <span class="incident-title">${f.user} <span style="color:var(--text-muted);font-weight:600;font-size:10.5px">(${f.id})</span></span>
+            <span class="badge ${f.severity==='danger'?'badge-open':'badge-half'}">${f.severity==='danger'?'خطورة عالية':'يستحق المتابعة'}</span>
+          </div>
+          <div class="incident-row"><span class="k">النمط:</span><span>${f.pattern}</span></div>
+          <div class="incident-row"><span class="k">التفاصيل:</span><span>${f.detail}</span></div>
+        </div>`).join('')}
+    </div>
+
+    <div class="panel">
+      <h2>${ICONS.target} محاكي اختبار الضغط (Stress Test)</h2>
+      <p class="panel-note">ماذا لو انخفضت السيولة المتاحة عبر كل المستخدمين اليوم؟</p>
+      <div class="stress-presets">
+        <span class="range-chip ${state.stressPct===10?'active':''}" onclick="setStressPct(10)">−10%</span>
+        <span class="range-chip ${state.stressPct===30?'active':''}" onclick="setStressPct(30)">−30%</span>
+        <span class="range-chip ${state.stressPct===50?'active':''}" onclick="setStressPct(50)">−50%</span>
+      </div>
+      <div class="stress-slider-wrap">
+        <div class="stress-slider-top"><span>نسبة الانخفاض في السيولة المتاحة</span><span class="val" id="stressPctLabel">-${state.stressPct}%</span></div>
+        <input type="range" min="5" max="80" step="5" value="${state.stressPct}" oninput="stressSliderInput(this.value)">
+      </div>
+      <div class="kpi-grid">
+        <div class="kpi-card"><p class="kpi-label">مستخدمون معرّضون للخطر</p><p class="kpi-value" id="stressAtRisk" style="color:var(--gold)">${stress.atRiskUsers.toLocaleString('ar-SA')}</p></div>
+        <div class="kpi-card"><p class="kpi-label">إجمالي التعرض المالي</p><p class="kpi-value" id="stressExposure" style="color:var(--danger)">${stress.exposure.toLocaleString('ar-SA')} ر.س</p></div>
+        <div class="kpi-card"><p class="kpi-label">احتمالية رفض عمليات</p><p class="kpi-value" id="stressDeclineRisk">${stress.declineRisk}%</p></div>
       </div>
     </div>`;
 }
@@ -437,12 +558,21 @@ function renderBanks(){
 function renderTransactions(){
   return `
     <div class="header-row"><div><h1>العمليات</h1><p>سجل كامل لعمليات الدفع والتحويلات عبر جميع المستخدمين</p></div>
-      <button class="btn btn-ghost">${ICONS.download} تصدير CSV</button></div>
+      <button class="btn btn-ghost" onclick="exportAuditCSV()">${ICONS.download} تصدير CSV</button></div>
     <div class="tab-row">
       <span class="tab-pill ${state.txFilter==='all'?'active':''}" onclick="state.txFilter='all';render()">الكل</span>
       <span class="tab-pill ${state.txFilter==='ok'?'active':''}" onclick="state.txFilter='ok';render()">مكتملة</span>
       <span class="tab-pill ${state.txFilter==='pending'?'active':''}" onclick="state.txFilter='pending';render()">قيد المعالجة</span>
       <span class="tab-pill ${state.txFilter==='failed'?'active':''}" onclick="state.txFilter='failed';render()">فشلت</span>
+    </div>
+    <div class="panel">
+      <h2>${ICONS.fileText} سجل التدقيق القابل للتصدير (Audit Trail)</h2>
+      <p class="panel-note">اختر المدى الزمني ثم صدّر السجل كملف CSV جاهز للمراجعة أو الرفع لجهة الامتثال.</p>
+      <div class="stress-presets">
+        <span class="range-chip ${state.auditRange==='7d'?'active':''}" onclick="setAuditRange('7d')">آخر 7 أيام</span>
+        <span class="range-chip ${state.auditRange==='30d'?'active':''}" onclick="setAuditRange('30d')">آخر 30 يوماً</span>
+        <button class="btn btn-ghost" style="margin-right:auto" onclick="exportAuditCSV()">${ICONS.download} تصدير السجل الحالي CSV</button>
+      </div>
     </div>
     <div class="panel"><div class="table-wrapper"><table><thead><tr><th>معرف المعاملة</th><th>المستخدم</th><th>المبلغ</th><th>نقدي</th><th>استثماري</th><th>الزمن</th><th>الحالة</th></tr></thead><tbody>
       ${txData.filter(t=>state.txFilter==='all'||t.status===state.txFilter).map(t=>`<tr><td><code>${t.id}</code></td><td>${t.user}</td><td>${t.total}</td><td>${t.cash}</td><td style="color:var(--emerald)">${t.invest}</td><td>${t.time}</td><td>${statusBadge(t.status)}</td></tr>`).join('')}
@@ -584,6 +714,7 @@ function render(){
   else if(state.page==='transactions') html=renderTransactions();
   else if(state.page==='revenue') html=renderRevenue();
   else if(state.page==='roadmap') html=renderRoadmap();
+  else if(state.page==='risk-radar') html=renderRiskRadar();
   else if(state.page==='financing') html=renderFinancing();
   else if(state.page==='sama-reports') html=renderSamaReports();
   else if(state.page==='kyc-review') html=renderKycReview();

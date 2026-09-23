@@ -238,6 +238,37 @@
   .sim-result-row .src .dot { width:8px; height:8px; border-radius:50%; }
   .sim-total { display:flex; justify-content:space-between; padding-top:10px; margin-top:4px; border-top:1px dashed var(--border-subtle); font-size:11.5px; font-weight:800; }
   .sim-warn { background:rgba(255,82,82,.1); border:1px solid rgba(255,82,82,.3); border-radius:8px; padding:9px; font-size:10.5px; color:var(--danger); margin-top:8px; }
+
+  /* --- Proactive alerts --- */
+  .alert-card { background:var(--surface-card); border:1px solid rgba(0,180,216,.35); border-radius:14px; padding:13px; margin-bottom:14px; display:flex; gap:10px; align-items:flex-start; }
+  .alert-card .ic-circle { width:32px; height:32px; border-radius:50%; background:rgba(0,180,216,.15); color:var(--cyan-tech); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  .alert-card .ic-circle svg { width:16px; height:16px; }
+  .alert-card-text { flex:1; }
+  .alert-card-title { font-size:11.5px; font-weight:700; color:#fff; }
+  .alert-card-sub { font-size:10.5px; color:var(--text-muted); margin-top:3px; line-height:1.6; }
+  .alert-card-close { background:none; border:none; color:var(--text-muted); cursor:pointer; padding:2px; flex-shrink:0; }
+  .alert-card-close svg { width:13px; height:13px; }
+
+  /* --- Liquidity report --- */
+  .lr-stat-box { background:var(--surface-card); border:1px solid var(--border-subtle); border-radius:14px; padding:16px; margin-bottom:12px; text-align:center; }
+  .lr-stat-value { font-size:26px; font-weight:900; color:var(--emerald); }
+  .lr-stat-label { font-size:11px; color:var(--text-muted); margin-top:4px; }
+  .lr-bar-row { margin-bottom:12px; }
+  .lr-bar-top { display:flex; justify-content:space-between; font-size:10.5px; color:var(--text-muted); margin-bottom:5px; }
+  .lr-bar-track { height:8px; background:var(--surface-inner); border-radius:4px; overflow:hidden; }
+  .lr-bar-fill { height:100%; border-radius:4px; background:linear-gradient(90deg,var(--cyan-tech),var(--emerald)); }
+  .lr-saved-box { background:linear-gradient(135deg,#0d2436,#081018); border:1px solid rgba(0,230,118,.3); border-radius:14px; padding:14px; text-align:center; margin:14px 0; }
+
+  /* --- Family / small-business mode --- */
+  .member-card { background:var(--surface-inner); border:1px solid var(--border-subtle); border-radius:12px; padding:12px; margin-bottom:9px; display:flex; align-items:center; gap:11px; }
+  .member-avatar { width:38px; height:38px; border-radius:50%; background:var(--surface-card); display:flex; align-items:center; justify-content:center; flex-shrink:0; color:var(--cyan-tech); }
+  .member-avatar svg { width:17px; height:17px; }
+  .member-avatar.inactive { color:var(--text-muted); }
+  .member-info { flex:1; }
+  .member-name { font-size:12px; font-weight:700; }
+  .member-meta { font-size:10px; color:var(--text-muted); margin-top:2px; }
+  .add-dashed svg { width:18px; height:18px; flex-shrink:0; }
+  .chev-ic svg { width:13px; height:13px; }
 </style>
 </head>
 <body>
@@ -403,6 +434,12 @@ let state = {
   financeRequest: { bank:'', type:'', amount:'', purpose:'', submitted:false, requestId:null },
   demoStep: 0,
   transferSimAmount: '1500',
+  alertDismissed: false,
+  familyMembers: [
+    { id:1, name:'سارة الحامد', role:'عضو عائلة', limit:3000, active:true },
+    { id:2, name:'عبدالله الحامد', role:'عضو عائلة', limit:1500, active:true },
+    { id:3, name:'فهد العتيبي', role:'موظف', limit:2000, active:false },
+  ],
 };
 
 /* accounts used by the transfer simulator, in priority order */
@@ -444,6 +481,8 @@ function newFinanceRequest(){
   render();
 }
 function scrollContentTop(){ const c = document.getElementById('content'); if(c) c.scrollTop = 0; }
+function dismissAlert(){ state.alertDismissed = true; render(); }
+function toggleMember(id){ const m = state.familyMembers.find(x=>x.id===id); if(m) m.active = !m.active; render(); }
 
 function moveP(id,dir){
   const idx = state.priorities.findIndex(p=>p.id===id);
@@ -486,9 +525,22 @@ function renderHome(){
       </div>
       <div class="trust-badge">${ICONS.shieldCheck} مشفّر وفق FAPI 1.0 Advanced · متوافق مع ساما</div>
     </div>
+    ${!state.alertDismissed ? `
+    <div class="alert-card">
+      <div class="ic-circle">${ICONS.shieldCheck}</div>
+      <div class="alert-card-text">
+        <div class="alert-card-title">تنبيه استباقي</div>
+        <div class="alert-card-sub">رصيدك الجاري أوشك يوصل الحد الآمن، نكسيوس جاهزة تغطي أي عملية تلقائياً دون أي إجراء منك.</div>
+      </div>
+      <button class="alert-card-close" onclick="dismissAlert()">${ICONS.x}</button>
+    </div>` : ''}
     <div class="demo-cta" onclick="openSub('demo')">
       <div><div class="demo-cta-text">شاهد كيف تعمل نكسيوس فاينانس</div><div class="demo-cta-sub">مثال حي: عملية كانت سترفض، وكيف تمت تغطيتها في 218ms</div></div>
       <div class="demo-play">${ICONS.play}</div>
+    </div>
+    <div class="demo-cta" onclick="openSub('liquidity-report')" style="border-color:rgba(0,230,118,.35)">
+      <div><div class="demo-cta-text">تقرير السيولة الدوري</div><div class="demo-cta-sub">كم مرة غطّتك نكسيوس هذا الشهر، وكم وفّرت عليك من رسوم</div></div>
+      <div class="demo-play" style="background:var(--emerald)">${ICONS.trendUp}</div>
     </div>
     <p style="font-size:11px;color:var(--text-muted);margin-bottom:8px">المصادر المربوطة حياً (Open Banking):</p>
     <div class="source-row"><div><div class="source-name">بنك الراجحي (جاري)</div><div class="source-meta">SA03 •••• 1016</div></div><span class="source-amt">400.00 ر.س</span></div>
@@ -634,6 +686,15 @@ function renderSettings(){
       </div>
     </div>
 
+    <p style="font-size:11px;color:var(--text-muted);margin:16px 0 8px;font-weight:700">العائلة والأعمال الصغيرة</p>
+    <div style="background:var(--surface-card);border:1px solid var(--border-subtle);border-radius:12px;padding:0 10px">
+      <div class="settings-item" onclick="openSub('family-mode')">
+        <div class="ic" style="color:var(--emerald)">${ICONS.user}</div>
+        <span class="lbl">وضع العائلة / الأعمال الصغيرة</span>
+        <span class="chev chev-ic">${ICONS.chevronLeft}</span>
+      </div>
+    </div>
+
     <p style="font-size:11px;color:var(--text-muted);margin:16px 0 8px;font-weight:700">تفضيلات التطبيق</p>
     <div style="background:var(--surface-card);border:1px solid var(--border-subtle);border-radius:12px;padding:0 10px">
       <div class="settings-item"><div class="ic">${ICONS.moon}</div><span class="lbl">المظهر الداكن</span><span class="chev"><button class="toggle on" style="pointer-events:none"><span class="knob"></span></button></span></div>
@@ -645,6 +706,55 @@ function renderSettings(){
       <div class="settings-item"><div class="ic">${ICONS.user}</div><span class="lbl">الملف الشخصي — HAMAD</span><span class="chev">${ICONS.chevronLeft.replace('width="24" height="24"','width="13" height="13"')}</span></div>
       <div class="settings-item" style="color:var(--danger)"><div class="ic" style="background:rgba(255,82,82,.12)">${ICONS.logout}</div><span class="lbl" style="color:var(--danger)">تسجيل الخروج</span></div>
     </div>
+    <div class="spacer"></div>`;
+  return h;
+}
+
+/* --- Periodic liquidity report --- */
+function renderLiquidityReport(){
+  const monthlyData = [
+    { label:'يناير', count:8 },
+    { label:'فبراير', count:10 },
+    { label:'مارس (حتى الآن)', count:12 },
+  ];
+  const max = Math.max(...monthlyData.map(d=>d.count));
+  let h = `<p class="page-title">تقرير السيولة الدوري</p><p class="page-sub">ملخص شهري لعدد المرات التي غطّتك نكسيوس فيها قبل أن تُرفض العملية</p>
+    <div class="lr-stat-box">
+      <div class="lr-stat-value">12</div>
+      <div class="lr-stat-label">عملية تمت تغطيتها هذا الشهر تلقائياً قبل أن تُرفض</div>
+    </div>
+    <div class="lr-saved-box">
+      <div style="font-size:11px;color:var(--text-muted)">المبلغ التقديري الذي وفّرته عليك نكسيوس</div>
+      <div style="font-size:24px;font-weight:900;color:var(--emerald);margin-top:4px">~480.00 <span style="font-size:12px">ر.س</span></div>
+      <div style="font-size:9.5px;color:var(--text-muted);margin-top:3px">مقارنةً برسوم تعثر السحب (NSF) المعتادة لدى البنوك</div>
+    </div>
+    <p style="font-size:11px;color:var(--text-muted);margin:16px 0 10px;font-weight:700">عدد مرات التغطية خلال آخر 3 أشهر</p>`;
+  monthlyData.forEach(d=>{
+    h += `<div class="lr-bar-row">
+      <div class="lr-bar-top"><span>${d.label}</span><span style="color:var(--cyan-tech);font-weight:700">${d.count} عملية</span></div>
+      <div class="lr-bar-track"><div class="lr-bar-fill" style="width:${(d.count/max*100).toFixed(0)}%"></div></div>
+    </div>`;
+  });
+  h += `<div class="trust-badge" style="margin-top:6px">${ICONS.shieldCheck} صفر عمليات مرفوضة فعلياً منذ انضمامك لنكسيوس</div>
+    <div class="spacer"></div>`;
+  return h;
+}
+
+/* --- Family / small-business mode --- */
+function renderFamilyMode(){
+  let h = `<p class="page-title">وضع العائلة / الأعمال الصغيرة</p><p class="page-sub">أدر سيولة أفراد عائلتك أو موظفيك من مكان واحد</p>`;
+  state.familyMembers.forEach(m=>{
+    h += `<div class="member-card">
+      <div class="member-avatar ${m.active?'':'inactive'}">${ICONS.user}</div>
+      <div class="member-info">
+        <div class="member-name">${m.name}</div>
+        <div class="member-meta">${m.role} · الحد الشهري: ${fmt(m.limit)} ر.س</div>
+      </div>
+      <button class="toggle ${m.active?'on':'off'}" onclick="toggleMember(${m.id})"><span class="knob"></span></button>
+    </div>`;
+  });
+  h += `<div class="add-dashed" style="border:1.5px dashed var(--border-subtle);border-radius:14px;padding:13px;text-align:center;color:var(--text-muted);font-size:12px;margin-top:6px;display:flex;align-items:center;justify-content:center;gap:6px;cursor:pointer">${ICONS.plus}<span>إضافة عضو جديد</span></div>
+    <p style="font-size:9.5px;color:var(--text-muted);margin-top:12px;line-height:1.6">حدّد حد سيولة شهري مستقل لكل عضو، مع إمكانية إيقاف أو تفعيل التغطية التلقائية لحسابه في أي وقت.</p>
     <div class="spacer"></div>`;
   return h;
 }
@@ -952,6 +1062,8 @@ const SUBPAGE_TITLES = {
   'kyc': 'اعرف عميلك',
   'nda': 'اتفاقية السرية',
   'demo': 'كيف يعمل نكسيوس',
+  'liquidity-report': 'تقرير السيولة الدوري',
+  'family-mode': 'العائلة والأعمال الصغيرة',
 };
 
 function render(){
@@ -967,6 +1079,8 @@ function render(){
   else if (state.subpage === 'kyc') body = renderKyc();
   else if (state.subpage === 'nda') body = renderNda();
   else if (state.subpage === 'demo') body = renderDemo();
+  else if (state.subpage === 'liquidity-report') body = renderLiquidityReport();
+  else if (state.subpage === 'family-mode') body = renderFamilyMode();
   else if (state.tab==='home') body = renderHome();
   else if (state.tab==='financing') body = renderFinancing();
   else if (state.tab==='transfers') body = renderTransfers();
