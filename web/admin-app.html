@@ -95,6 +95,46 @@
   .reg-tag { display:inline-block; font-size:9.5px; background:rgba(72,202,228,.12); color:var(--cyan-soft); border:1px solid rgba(72,202,228,.3); padding:2px 8px; border-radius:6px; margin-left:5px; margin-bottom:5px; }
 
   @media (max-width:900px){ .kpi-grid{grid-template-columns:repeat(2,1fr)} .grid-2{grid-template-columns:1fr} .sidebar{display:none} }
+
+  /* --- Revenue model --- */
+  .rev-row { display:flex; align-items:center; gap:16px; padding:14px; border:1px solid var(--border-subtle); border-radius:12px; margin-bottom:10px; background:var(--surface-inner); }
+  .rev-bar-wrap { width:100%; height:6px; background:var(--border-subtle); border-radius:3px; overflow:hidden; margin-top:8px; }
+  .rev-bar { height:100%; background:linear-gradient(90deg,var(--cyan-tech),var(--emerald)); border-radius:3px; }
+  .rev-name { font-size:13px; font-weight:800; }
+  .rev-desc { font-size:11px; color:var(--text-muted); margin-top:3px; line-height:1.6; }
+  .rev-model { font-size:10.5px; color:var(--cyan-soft); margin-top:5px; }
+  .rev-amt { font-size:15px; font-weight:800; color:var(--emerald); white-space:nowrap; text-align:left; }
+  .rev-share { font-size:10px; color:var(--text-muted); text-align:left; margin-top:2px; }
+
+  .ue-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; }
+  .ue-card { background:var(--surface-inner); border:1px solid var(--border-subtle); border-radius:12px; padding:15px; }
+  .ue-label { font-size:10.5px; color:var(--text-muted); line-height:1.5; min-height:30px; }
+  .ue-value { font-size:19px; font-weight:800; margin-top:8px; }
+  .ue-value.ok { color:var(--emerald); }
+
+  /* --- Roadmap --- */
+  .roadmap-track { position:relative; padding-right:28px; }
+  .roadmap-track::before { content:""; position:absolute; right:8px; top:6px; bottom:6px; width:2px; background:var(--border-subtle); }
+  .rm-phase { position:relative; margin-bottom:22px; }
+  .rm-phase::before { content:""; position:absolute; right:-28px; top:3px; width:14px; height:14px; border-radius:50%; border:3px solid var(--bg-dark); }
+  .rm-phase.done::before { background:var(--emerald); }
+  .rm-phase.active::before { background:var(--cyan-tech); box-shadow:0 0 0 4px rgba(0,180,216,.2); }
+  .rm-phase.next::before { background:var(--gold); }
+  .rm-phase.future::before { background:var(--border-subtle); }
+  .rm-head { display:flex; align-items:center; gap:10px; margin-bottom:8px; }
+  .rm-title { font-size:13.5px; font-weight:800; }
+  .rm-period { font-size:10.5px; color:var(--text-muted); }
+  .rm-items { background:var(--surface-inner); border:1px solid var(--border-subtle); border-radius:10px; padding:12px 14px; }
+  .rm-items li { font-size:11.5px; color:#D8E2EC; margin-bottom:6px; line-height:1.6; }
+  .rm-items li:last-child { margin-bottom:0; }
+
+  /* --- Incident log / circuit breaker case study --- */
+  .incident-card { background:var(--surface-inner); border:1px solid var(--border-subtle); border-radius:12px; padding:14px; margin-bottom:10px; }
+  .incident-top { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
+  .incident-title { font-size:12.5px; font-weight:800; }
+  .incident-date { font-size:10px; color:var(--text-muted); }
+  .incident-row { display:flex; gap:8px; font-size:11px; margin-bottom:5px; line-height:1.6; }
+  .incident-row .k { color:var(--text-muted); white-space:nowrap; flex-shrink:0; min-width:90px; }
 </style>
 </head>
 <body>
@@ -131,6 +171,11 @@ const ICONS = {
   idCard: ic(`<rect x="2" y="5" width="20" height="14" rx="2.5"/><circle cx="8" cy="11" r="2"/><path d="M5 17c.5-2 2-3 3-3s2.5 1 3 3"/><path d="M14 9h5"/><path d="M14 13h5"/>`),
   fileText: ic(`<path d="M14 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8Z"/><path d="M14 3v5h5"/><path d="M9 13h6"/><path d="M9 17h6"/>`),
   check: ic(`<path d="M20 6 9 17l-5-5"/>`),
+  trendUp: ic(`<path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/>`),
+  flag: ic(`<path d="M5 3v18"/><path d="M5 4h11l-2 4 2 4H5"/>`),
+  coins: ic(`<circle cx="9" cy="9" r="6"/><path d="M14.5 8a6 6 0 1 1 0 10.5"/><path d="M6.5 9h5"/><path d="M9 6.5v5"/>`),
+  history: ic(`<path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/><path d="M12 8v5l3.5 2"/>`),
+  target: ic(`<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1" fill="currentColor" stroke="none"/>`),
 };
 function logoSVG(w,h){
   return `<svg width="${w}" height="${h}" viewBox="0 0 220 90" xmlns="http://www.w3.org/2000/svg">
@@ -151,12 +196,45 @@ const NAV = [
   { key:'users', label:'المستخدمون', icon:'users' },
   { key:'banks', label:'البنوك المربوطة', icon:'bank' },
   { key:'transactions', label:'العمليات', icon:'receipt' },
-  { key:'financing', label:'طلبات التمويل', icon:'fileText', section:true },
+  { key:'revenue', label:'نموذج الإيرادات', icon:'trendUp', sectionLabel:'النمو والأعمال' },
+  { key:'roadmap', label:'خارطة الطريق', icon:'flag' },
+  { key:'financing', label:'طلبات التمويل', icon:'fileText', sectionLabel:'امتثال ساما (SAMA)' },
   { key:'sama-reports', label:'تقارير ساما', icon:'fileCheck' },
   { key:'kyc-review', label:'مراجعة KYC', icon:'idCard' },
   { key:'settings', label:'الإعدادات', icon:'settings' },
 ];
 function setPage(p){ state.page=p; render(); }
+
+/* --- Revenue model & unit economics --- */
+const revenueStreams = [
+  { name:'عمولة التسييل اللحظي', desc:'نسبة من كل عملية تسييل تلقائي من صناديق الاستثمار أو البطاقات الاحتياطية', model:'0.4% لكل عملية تسييل', monthlyEst:'186,400 ر.س', share:42 },
+  { name:'اشتراك نكسيوس بلس (شهري)', desc:'رسوم اشتراك للمستخدمين الذين يرغبون بسقوف تسييل أعلى وأولوية دعم', model:'29 ر.س / شهرياً لكل مشترك', monthlyEst:'121,000 ر.س', share:27 },
+  { name:'حصة من فائدة التمويل البنكي', desc:'نسبة من الفائدة أو الرسوم التي تحصّلها البنوك الشريكة على تسهيلات التمويل المُحالة عبر المنصة', model:'15% من هامش الفائدة المحصّل', monthlyEst:'98,700 ر.س', share:22 },
+  { name:'رسوم تكامل للشركاء (B2B)', desc:'رسوم تركيب واشتراك سنوي لصناديق الاستثمار والبنوك الراغبة بالانضمام كمزود سيولة', model:'رسوم تكامل ثابتة + اشتراك سنوي', monthlyEst:'40,900 ر.س', share:9 },
+];
+const unitEconomics = [
+  { label:'متوسط الإيراد لكل عملية تسييل (ARPU/txn)', value:'2.85 ر.س', tone:'ok' },
+  { label:'التكلفة التشغيلية لكل عملية (البنية التحتية + معالجة)', value:'0.62 ر.س', tone:'muted' },
+  { label:'هامش المساهمة لكل عملية (Contribution Margin)', value:'2.23 ر.س (~78%)', tone:'ok' },
+  { label:'تكلفة اكتساب المستخدم (CAC) التقديرية', value:'34 ر.س', tone:'muted' },
+  { label:'القيمة الدائمة المتوقعة للمستخدم (LTV، 24 شهراً)', value:'412 ر.س', tone:'ok' },
+  { label:'نسبة LTV إلى CAC', value:'12.1x', tone:'ok' },
+];
+
+/* --- Product roadmap --- */
+const roadmapPhases = [
+  { phase:'المرحلة 0 — المكتملة', period:'2025 Q4 – 2026 Q1', status:'done', items:['محرك التسييل اللحظي (Orchestrator) وربط 3 مزودين', 'تطبيق المستخدم ولوحة الإدارة (نسخة تجريبية)', 'نموذج KYC وNDA رقمي'] },
+  { phase:'المرحلة 1 — قيد التنفيذ', period:'2026 Q2', status:'active', items:['الانضمام إلى بيئة ساما التجريبية (Regulatory Sandbox)', 'ربط بنكين إضافيين عبر Open Banking', 'إطلاق اشتراك نكسيوس بلس'] },
+  { phase:'المرحلة 2 — القادمة', period:'2026 Q3 – Q4', status:'next', items:['التقديم على ترخيص ساما الكامل لمزود خدمات دفع', 'توسيع شبكة صناديق الاستثمار الشريكة', 'دعم الشركات الصغيرة (B2B Liquidity)'] },
+  { phase:'المرحلة 3 — مستقبلية', period:'2027', status:'future', items:['التوسع الإقليمي (الإمارات، البحرين)', 'محرك ائتمان بديل (Alternative Credit Scoring)', 'واجهة API عامة للمطورين'] },
+];
+
+/* --- Circuit breaker incident history (documented case study) --- */
+const incidentLog = [
+  { title:'عزل تلقائي — بنك الرياض', date:'اليوم، 10:12 ص', duration:'4 دقائق (مستمر)', trigger:'3 محاولات فاشلة متتالية بزمن استجابة > 150ms', impact:'تحويل تلقائي لـ 0 عملية معلّقة إلى المصدر التالي في قائمة الأولويات — لا تأثير على المستخدمين', resolution:'قيد المراقبة — سيُعاد تفعيله تلقائياً بعد فحص نجاح' },
+  { title:'عزل تلقائي — صندوق دراية للسيولة', date:'14 يناير 2026، 2:47 م', duration:'11 دقيقة', trigger:'انقطاع مؤقت في واجهة استرداد الوحدات لدى مزود الصندوق', impact:'12 عملية أُعيد توجيهها تلقائياً إلى البطاقة الاحتياطية دون رفض أي عملية', resolution:'تعافى المزود تلقائياً، أُعيد تفعيل المسار بعد فحصين ناجحين متتاليين' },
+  { title:'عزل تلقائي — بنك الأول', date:'2 يناير 2026، 9:03 ص', duration:'6 دقائق', trigger:'تجاوز مهلة الاستجابة القصوى (SLA Timeout) في واجهة السحب الفوري', impact:'3 عمليات صغيرة (أقل من 200 ر.س) عولجت بالكامل من الحساب الجاري دون الحاجة للبطاقة', resolution:'تم التعافي وأُعيد الفتح تلقائياً؛ لم يتطلب تدخلاً يدوياً' },
+];
 
 const providers = [
   { name:'بنك الراجحي', status:'ok', latency:'84ms', success:'99.6%', users:842 },
@@ -252,6 +330,63 @@ function renderDashboard(){
     </div>`;
 }
 
+function renderRevenue(){
+  return `
+    <div class="header-row"><div><h1>نموذج الإيرادات</h1><p>مصادر دخل المنصة الفعلية والمقترحة، وربحية العملية الواحدة</p></div>
+      <span class="env-pill">بيانات تقديرية — نموذج مبكر</span></div>
+
+    <div class="panel">
+      <h2>${ICONS.coins} مصادر الإيرادات</h2>
+      <p class="panel-note">تقدير شهري تقريبي بناءً على القاعدة الحالية من المستخدمين وحجم التسييل اليومي.</p>
+      ${revenueStreams.map(r=>`
+        <div class="rev-row">
+          <div style="flex:1">
+            <div class="rev-name">${r.name}</div>
+            <div class="rev-desc">${r.desc}</div>
+            <div class="rev-model">${r.model}</div>
+            <div class="rev-bar-wrap"><div class="rev-bar" style="width:${r.share}%"></div></div>
+          </div>
+          <div>
+            <div class="rev-amt">${r.monthlyEst}</div>
+            <div class="rev-share">${r.share}% من الإيراد الشهري</div>
+          </div>
+        </div>`).join('')}
+    </div>
+
+    <div class="panel">
+      <h2>${ICONS.chartUp} اقتصاديات الوحدة (Unit Economics)</h2>
+      <p class="panel-note">مؤشرات ربحية العملية الواحدة والمستخدم الواحد — تقديرية لأغراض العرض على المستثمرين.</p>
+      <div class="ue-grid">
+        ${unitEconomics.map(u=>`
+          <div class="ue-card">
+            <div class="ue-label">${u.label}</div>
+            <div class="ue-value ${u.tone==='ok'?'ok':''}">${u.value}</div>
+          </div>`).join('')}
+      </div>
+    </div>`;
+}
+
+function renderRoadmap(){
+  const statusLabel = { done:'مكتملة', active:'قيد التنفيذ', next:'التالية', future:'مستقبلية' };
+  const statusBadgeCls = { done:'badge-ok', active:'badge-pending', next:'badge-half', future:'badge-pending' };
+  return `
+    <div class="header-row"><div><h1>خارطة الطريق</h1><p>مراحل تطوير المنتج والتوسع التنظيمي والجغرافي</p></div>
+      <span class="env-pill">Product Roadmap</span></div>
+    <div class="panel">
+      <div class="roadmap-track">
+        ${roadmapPhases.map(p=>`
+          <div class="rm-phase ${p.status}">
+            <div class="rm-head">
+              <span class="rm-title">${p.phase}</span>
+              <span class="badge ${statusBadgeCls[p.status]}">${statusLabel[p.status]}</span>
+              <span class="rm-period">${p.period}</span>
+            </div>
+            <div class="rm-items"><ul style="margin:0;padding-right:18px">${p.items.map(i=>`<li>${i}</li>`).join('')}</ul></div>
+          </div>`).join('')}
+      </div>
+    </div>`;
+}
+
 function renderUsers(){
   return `
     <div class="header-row"><div><h1>المستخدمون</h1><p>${usersData.length} مستخدم معروض من أصل 2٬014</p></div>
@@ -283,6 +418,19 @@ function renderBanks(){
       <div class="settings-row"><span>إعادة المحاولة التلقائية عند فشل الاتصال</span><button class="toggle on"><span class="knob"></span></button></div>
       <div class="settings-row"><span>تنبيه فريق العمليات عند فتح قاطع الدائرة</span><button class="toggle on"><span class="knob"></span></button></div>
       <div class="settings-row"><span>تفعيل بنك الرياض تلقائياً بعد التعافي</span><button class="toggle off"><span class="knob"></span></button></div>
+    </div>
+
+    <div class="panel">
+      <h2>${ICONS.history} سجل حوادث قاطع الدائرة (Circuit Breaker Case Studies)</h2>
+      <p class="panel-note">توثيق فعلي لكل مرة عُزل فيها مزود تلقائياً، وكيف تعامل النظام مع العمليات المتأثرة دون تعطيل تجربة المستخدم.</p>
+      ${incidentLog.map(inc=>`
+        <div class="incident-card">
+          <div class="incident-top"><span class="incident-title">${inc.title}</span><span class="incident-date">${inc.date}</span></div>
+          <div class="incident-row"><span class="k">المدة:</span><span>${inc.duration}</span></div>
+          <div class="incident-row"><span class="k">سبب العزل:</span><span>${inc.trigger}</span></div>
+          <div class="incident-row"><span class="k">الأثر الفعلي:</span><span style="color:var(--emerald)">${inc.impact}</span></div>
+          <div class="incident-row"><span class="k">المعالجة:</span><span>${inc.resolution}</span></div>
+        </div>`).join('')}
     </div>`;
 }
 
@@ -378,6 +526,17 @@ function renderSamaReports(){
       <div class="settings-row"><span>حماية بيانات المستهلك المالي</span><span class="badge badge-ok">مطابق</span></div>
       <div class="settings-row"><span>إقامة البيانات داخل المملكة (Data Residency)</span><span class="badge badge-ok">مطابق</span></div>
       <div class="settings-row"><span>كفاية رأس المال لأنشطة التمويل الاستهلاكي</span><span class="badge badge-half">قيد المراجعة</span></div>
+    </div>
+
+    <div class="panel">
+      <h2>${ICONS.shield} حالة الامتثال الحي (Live Compliance Status)</h2>
+      <p class="panel-note">مؤشرات حية على جاهزية النظام الأمني والتنظيمي، محدّثة لحظياً من أنظمة المراقبة الداخلية.</p>
+      <div class="kpi-grid" style="grid-template-columns:repeat(4,1fr)">
+        <div class="kpi-card"><p class="kpi-label">نسبة العمليات المدقَّقة آلياً</p><p class="kpi-value" style="color:var(--emerald);font-size:17px">100%</p><p class="kpi-note" style="color:var(--text-muted)">كل عملية تُسجَّل بدفتر Append-Only</p></div>
+        <div class="kpi-card"><p class="kpi-label">حالة شهادات mTLS مع البنوك</p><p class="kpi-value" style="color:var(--emerald);font-size:17px">سارية</p><p class="kpi-note" style="color:var(--text-muted)">آخر تجديد: 1 يناير 2026</p></div>
+        <div class="kpi-card"><p class="kpi-label">آخر تدقيق أمني خارجي (Pen Test)</p><p class="kpi-value" style="font-size:17px">18 ديسمبر 2025</p><p class="kpi-note" style="color:var(--cyan-tech)">القادم: مارس 2026</p></div>
+        <div class="kpi-card"><p class="kpi-label">حوادث تسريب بيانات مسجَّلة</p><p class="kpi-value" style="color:var(--emerald);font-size:17px">0</p><p class="kpi-note" style="color:var(--text-muted)">منذ بدء التشغيل التجريبي</p></div>
+      </div>
     </div>`;
 }
 
@@ -417,12 +576,14 @@ function renderSettings(){
 
 function render(){
   document.getElementById('sideBrand').innerHTML = `${logoSVG(34,15)}<span>NEXIOS<span class="dot">.</span> FINANCE</span>`;
-  document.getElementById('navItems').innerHTML = NAV.map(n=>`${n.section?'<div class="nav-section">امتثال ساما (SAMA)</div>':''}<div class="nav-item ${state.page===n.key?'active':''}" onclick="setPage('${n.key}')">${ICONS[n.icon]}<span>${n.label}</span></div>`).join('');
+  document.getElementById('navItems').innerHTML = NAV.map(n=>`${n.sectionLabel?`<div class="nav-section">${n.sectionLabel}</div>`:''}<div class="nav-item ${state.page===n.key?'active':''}" onclick="setPage('${n.key}')">${ICONS[n.icon]}<span>${n.label}</span></div>`).join('');
   let html='';
   if(state.page==='dashboard') html=renderDashboard();
   else if(state.page==='users') html=renderUsers();
   else if(state.page==='banks') html=renderBanks();
   else if(state.page==='transactions') html=renderTransactions();
+  else if(state.page==='revenue') html=renderRevenue();
+  else if(state.page==='roadmap') html=renderRoadmap();
   else if(state.page==='financing') html=renderFinancing();
   else if(state.page==='sama-reports') html=renderSamaReports();
   else if(state.page==='kyc-review') html=renderKycReview();
