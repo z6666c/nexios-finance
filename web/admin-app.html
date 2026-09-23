@@ -253,10 +253,16 @@ const providers = [
   { name:'بنك الراجحي', status:'ok', latency:'84ms', success:'99.6%', users:842 },
   { name:'صندوق دراية للسيولة', status:'ok', latency:'96ms', success:'99.9%', users:1105 },
   { name:'بنك الأول', status:'half', latency:'210ms', success:'91.2%', users:511 },
+  { name:'مصرف الإنماء', status:'ok', latency:'92ms', success:'99.4%', users:620 },
+  { name:'البنك السعودي الفرنسي', status:'ok', latency:'101ms', success:'99.1%', users:480 },
+  { name:'بنك الجزيرة', status:'ok', latency:'88ms', success:'99.7%', users:305 },
+  { name:'البنك الأهلي السعودي', status:'ok', latency:'79ms', success:'99.8%', users:960 },
+  { name:'محفظة الأسهم السعودية', status:'ok', latency:'110ms', success:'99.5%', users:540 },
+  { name:'محفظة صناديق المؤشرات العالمية', status:'ok', latency:'118ms', success:'99.3%', users:390 },
   { name:'بنك الرياض', status:'open', latency:'—', success:'غير متصل', users:0 },
 ];
 const usersData = [
-  { name:'HAMAD (المؤسس)', id:'USR-992', accounts:4, liquidity:'48,350 ر.س', status:'نشط' },
+  { name:'HAMAD (المؤسس)', id:'USR-992', accounts:9, liquidity:'78,977 ر.س', status:'نشط' },
   { name:'SULTAN', id:'USR-401', accounts:2, liquidity:'8,120 ر.س', status:'نشط' },
   { name:'محمد القحطاني', id:'USR-773', accounts:2, liquidity:'21,900 ر.س', status:'موقوف مؤقتاً' },
   { name:'نورة الشمري', id:'USR-215', accounts:1, liquidity:'3,050 ر.س', status:'نشط' },
@@ -272,6 +278,12 @@ const financingAgreements = [
   { bank:'بنك الراجحي', type:'تسهيل سحب فوري (VRP)', limit:'5,000 ر.س / يومياً لكل مستخدم', utilization:'62%', signed:'10 يناير 2026', renewal:'10 يناير 2027', status:'نشط', regs:['SAMA Open Banking','FAPI 1.0 Advanced'] },
   { bank:'صندوق دراية للسيولة', type:'تسييل استثماري آلي', limit:'50,000 ر.س / يومياً لكل مستخدم', utilization:'41%', signed:'1 فبراير 2026', renewal:'1 فبراير 2027', status:'نشط', regs:['لائحة صناديق الاستثمار','CMA'] },
   { bank:'بنك الأول', type:'بطاقة ائتمانية احتياطية', limit:'6,000 ر.س لكل مستخدم', utilization:'18%', signed:'15 نوفمبر 2025', renewal:'15 نوفمبر 2026', status:'قيد التجديد', regs:['قواعد البطاقات الائتمانية — ساما'] },
+  { bank:'مصرف الإنماء', type:'تسهيل سحب فوري (VRP)', limit:'3,000 ر.س / يومياً لكل مستخدم', utilization:'35%', signed:'5 مارس 2026', renewal:'5 مارس 2027', status:'نشط', regs:['SAMA Open Banking','FAPI 1.0 Advanced'] },
+  { bank:'البنك السعودي الفرنسي', type:'تسهيل سحب فوري (VRP)', limit:'4,000 ر.س / يومياً لكل مستخدم', utilization:'28%', signed:'12 مارس 2026', renewal:'12 مارس 2027', status:'نشط', regs:['SAMA Open Banking','FAPI 1.0 Advanced'] },
+  { bank:'بنك الجزيرة', type:'تسهيل سحب فوري (VRP)', limit:'2,000 ر.س / يومياً لكل مستخدم', utilization:'44%', signed:'20 مارس 2026', renewal:'20 مارس 2027', status:'نشط', regs:['SAMA Open Banking','FAPI 1.0 Advanced'] },
+  { bank:'البنك الأهلي السعودي', type:'تسهيل سحب فوري (VRP)', limit:'3,500 ر.س / يومياً لكل مستخدم', utilization:'51%', signed:'28 مارس 2026', renewal:'28 مارس 2027', status:'نشط', regs:['SAMA Open Banking','FAPI 1.0 Advanced'] },
+  { bank:'محفظة الأسهم السعودية', type:'تسييل استثماري آلي', limit:'40,000 ر.س / يومياً لكل مستخدم', utilization:'33%', signed:'2 أبريل 2026', renewal:'2 أبريل 2027', status:'نشط', regs:['لائحة صناديق الاستثمار','CMA'] },
+  { bank:'محفظة صناديق المؤشرات العالمية', type:'تسييل استثماري آلي', limit:'35,000 ر.س / يومياً لكل مستخدم', utilization:'22%', signed:'2 أبريل 2026', renewal:'2 أبريل 2027', status:'نشط', regs:['لائحة صناديق الاستثمار','CMA'] },
   { bank:'بنك الرياض', type:'تسهيل سيولة (مقترح)', limit:'—', utilization:'—', signed:'—', renewal:'—', status:'معلّق', regs:['قيد التفاوض'] },
 ];
 

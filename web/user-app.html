@@ -539,7 +539,7 @@ function renderHome(){
     <p class="page-sub">القوة الشرائية الحية المجمّعة من كل مصادرك</p>
     <div class="hero-box">
       <span class="hero-label">إجمالي القوة الشرائية المتاحة</span>
-      <div class="hero-value">48,350.00 <span style="font-size:12px;font-weight:600">ر.س</span></div>
+      <div class="hero-value">${fmt(linkedAccounts.reduce((s,a)=>s+a.balance,0))} <span style="font-size:12px;font-weight:600">ر.س</span></div>
       <div class="split-bar">
         <div style="width:20%;background:var(--cyan-tech)"></div>
         <div style="width:65%;background:var(--emerald)"></div>
