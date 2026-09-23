@@ -4,7 +4,7 @@ import (
 	"encoding/xml"
 	"time"
 
-	"github.com/google/uuid"
+	"nexios-finance/internal/uuid"
 )
 
 // Pacs008Message is a simplified ISO 20022 pacs.008 structure for instant
